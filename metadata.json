@@ -1,0 +1,7 @@
+{
+  "name": "GetCarbonProof Auditor",
+  "description": "A high-performance auditing dashboard for carbon data extraction from utility bills, ESG reports, and regulatory documents using Gemini AI.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
