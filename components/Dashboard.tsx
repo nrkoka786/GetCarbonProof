@@ -16,11 +16,16 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isSample, onAuthRequired, onSignInRequired }) => {
   const { user } = useAuth();
 
-  // NEW: Logic to extract Company Name from the audit results (e.g., FZ Prestige Digital)
+  // NEW: Robust Logic to extract Company Name from the audit results array
   const clientName = useMemo(() => {
+    // Priority 1: Check if any entry has a populated company_name
     const found = results.find(r => r.company_name && r.company_name.trim() !== '')?.company_name;
     if (found) return found;
+
+    // Priority 2: Sample mode fallback
     if (isSample) return "Sample Corporation";
+
+    // Priority 3: Default fallback if no name is detected yet
     return "Authorized Portfolio";
   }, [results, isSample]);
 
@@ -103,7 +108,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       const imgProps = doc.getImageProperties(imgData);
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-      // UPDATED BRANDING: Company Name from document now takes the primary title spot
+      // BRANDING HEADER: Prominent Company Name from the PDF
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(100, 116, 139); 
@@ -151,14 +156,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </div>
       )}
 
-      {/* NEW: Dynamic Company Header on Dashboard */}
+      {/* NEW: Dynamic Company Header Section for the Dashboard */}
       <div className="flex justify-between items-end border-b border-slate-100 pb-6 mb-6">
         <div>
           <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">Executive Audit Summary</span>
           <h2 className="text-3xl font-black text-slate-900 mt-1">{clientName}</h2>
         </div>
         <div className="flex gap-3">
-          {/* Maintained: Export Charts Button as requested */}
+          {/* Maintained: Export Charts Button as required */}
           <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-2">
             <i className="fas fa-file-export"></i> EXPORT CHARTS
           </button>
@@ -328,7 +333,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </div>
       </div>
 
-      {/* Auditor Commentary Card */}
+      {/* Auditor Commentary Card with Numeric Audit Trail */}
       <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm mt-8 space-y-6">
         <h4 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 uppercase tracking-widest text-xs flex items-center gap-3">
           <i className="fas fa-file-invoice text-indigo-600"></i>
@@ -336,6 +341,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </h4>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          {/* Narrative Column */}
           <div className="space-y-6 text-sm leading-relaxed text-slate-600">
             <p>
               <strong className="text-slate-900 underline underline-offset-4 decoration-indigo-200">Inventory Distribution:</strong> This reporting period 
@@ -349,6 +355,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
             </p>
           </div>
 
+          {/* Numeric Audit Trail Column */}
           <div className="bg-slate-50 p-6 rounded-2xl space-y-3 border border-slate-100">
             <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Granular Audit Values (kg CO2e)</h5>
             {summary.consolidatedData.slice(0, 6).map((item, idx) => (

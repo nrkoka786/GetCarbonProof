@@ -2,3 +2,7 @@
 git add .
 git commit -m "feat: add auditor commentary and sync secure node"
 git push origin main
+
+
+
+As I mentioned before, please do not delete any lines. Please add the new code to add the 'Company Name' in the report. Enclosed the current Dashboard.tsx file.
