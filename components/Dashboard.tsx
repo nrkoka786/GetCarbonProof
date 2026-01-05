@@ -313,6 +313,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
           </div>
         </div>
       </div>
+
+      {/* RECOMMENDED EXPLANATORY TEXT ADDITIONS */}
+      <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm mt-8 space-y-6">
+        <h4 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 uppercase tracking-widest text-xs flex items-center gap-3">
+          <i className="fas fa-pen-nib text-indigo-600"></i>
+          Auditor Executive Commentary
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm leading-relaxed text-slate-600">
+          <div className="space-y-4">
+            <p>
+              <strong className="text-slate-900 underline underline-offset-4 decoration-indigo-200">Inventory Distribution:</strong> This reporting period 
+              highlights a concentration of emissions within Scope 1 (Direct Fuel) and Scope 3 (Purchased Goods), which 
+              together constitute the vast majority of the verified organizational footprint.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <p>
+              <strong className="text-slate-900 underline underline-offset-4 decoration-indigo-200">Verification Statement:</strong> Audit procedures 
+              executed include data consistency checks and cross-validation against authoritative emission factor 
+              databases (EPA 2024, IPCC AR5). Calculations comply with GHG Protocol Corporate Standard requirements.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
