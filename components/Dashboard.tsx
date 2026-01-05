@@ -16,6 +16,14 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isSample, onAuthRequired, onSignInRequired }) => {
   const { user } = useAuth();
 
+  // NEW: Logic to extract Company Name from the audit results (e.g., FZ Prestige Digital)
+  const clientName = useMemo(() => {
+    const found = results.find(r => r.company_name && r.company_name.trim() !== '')?.company_name;
+    if (found) return found;
+    if (isSample) return "Sample Corporation";
+    return "Authorized Portfolio";
+  }, [results, isSample]);
+
   const summary = useMemo(() => {
     const total = results.reduce((acc, curr) => acc + (Number(curr.co2e_kg) || 0), 0);
     const docSources = Array.from(new Set(results.map(r => r.doc_type).filter(Boolean)));
@@ -95,14 +103,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       const imgProps = doc.getImageProperties(imgData);
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
+      // UPDATED BRANDING: Company Name from document now takes the primary title spot
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(22);
-      doc.setTextColor(55, 48, 163); 
-      doc.text('GetCarbonProof', 20, 20);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139); 
+      doc.text('AUTHENTICATED BY GETCARBONPROOF', 20, 15);
       
-      doc.setFontSize(16);
+      doc.setFontSize(22);
       doc.setTextColor(15, 23, 42);
-      doc.text('EXECUTIVE AUDIT SUMMARY', 20, 35);
+      doc.text(clientName.toUpperCase(), 20, 28);
+      
+      doc.setFontSize(14);
+      doc.setTextColor(79, 70, 229);
+      doc.text('EXECUTIVE AUDIT SUMMARY', 20, 38);
 
       doc.addImage(imgData, 'PNG', 0, 45, pdfWidth, pdfHeight);
       
@@ -112,7 +125,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       doc.text(`Authenticated Auditor: ${user.email}`, 20, footerY);
       doc.text(`Verification Timestamp: ${new Date().toLocaleString()}`, 20, footerY + 7);
       
-      doc.save(`Executive_Audit_Summary_${new Date().getTime()}.pdf`);
+      doc.save(`${clientName.replace(/\s+/g, '_')}_Carbon_Audit.pdf`);
     } catch (e) {
       console.error("Visual PDF generation failed", e);
     }
@@ -137,6 +150,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
           </div>
         </div>
       )}
+
+      {/* NEW: Dynamic Company Header on Dashboard */}
+      <div className="flex justify-between items-end border-b border-slate-100 pb-6 mb-6">
+        <div>
+          <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">Executive Audit Summary</span>
+          <h2 className="text-3xl font-black text-slate-900 mt-1">{clientName}</h2>
+        </div>
+        <div className="flex gap-3">
+          {/* Maintained: Export Charts Button as requested */}
+          <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-2">
+            <i className="fas fa-file-export"></i> EXPORT CHARTS
+          </button>
+          {results.length > 0 && user && (
+            <button 
+              onClick={downloadSummaryPDF}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg active:scale-95 flex items-center gap-2"
+            >
+              <i className="fas fa-file-pdf"></i> Download Signed PDF
+            </button>
+          )}
+        </div>
+      </div>
 
       {isSample && (
         <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-center gap-4 animate-in slide-in-from-top-4 duration-500">
@@ -244,26 +279,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
               <i className="fas fa-poll text-indigo-600"></i>
               Impact by Category (kg)
             </h4>
-            
-            {results.length > 0 && (
-              user ? (
-                <button 
-                  onClick={downloadSummaryPDF}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-2"
-                >
-                  <i className="fas fa-file-pdf"></i>
-                  Download Signed PDF
-                </button>
-              ) : (
-                <button 
-                  onClick={onSignInRequired}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center gap-2"
-                >
-                  <i className="fas fa-sign-in-alt"></i>
-                  Sign In to Save
-                </button>
-              )
-            )}
           </div>
           <div className="flex-1">
             <ResponsiveContainer width="100%" height="90%">
@@ -313,7 +328,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </div>
       </div>
 
-      {/* ENHANCED: Auditor Commentary with Numeric Audit Trail */}
+      {/* Auditor Commentary Card */}
       <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm mt-8 space-y-6">
         <h4 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 uppercase tracking-widest text-xs flex items-center gap-3">
           <i className="fas fa-file-invoice text-indigo-600"></i>
@@ -321,7 +336,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </h4>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          {/* Narrative Column */}
           <div className="space-y-6 text-sm leading-relaxed text-slate-600">
             <p>
               <strong className="text-slate-900 underline underline-offset-4 decoration-indigo-200">Inventory Distribution:</strong> This reporting period 
@@ -335,7 +349,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
             </p>
           </div>
 
-          {/* Numeric Audit Trail Column */}
           <div className="bg-slate-50 p-6 rounded-2xl space-y-3 border border-slate-100">
             <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Granular Audit Values (kg CO2e)</h5>
             {summary.consolidatedData.slice(0, 6).map((item, idx) => (
