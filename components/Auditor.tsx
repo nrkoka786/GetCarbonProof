@@ -76,24 +76,21 @@ export const Auditor: React.FC<AuditorProps> = ({
   };
 
   const runAudit = async (files: File[]) => {
-    // IMMEDIATE LOG OUTPUT: Clear terminal and push mandatory SYSTEM lines
     setLog([]); 
     const timestamp = new Date().toLocaleTimeString('en-GB');
     const initialLines = [
       `[${timestamp}] [SYSTEM] Initializing GetCarbonProof Lead Auditor Engine...`,
       `[${timestamp}] [SYSTEM] Target: New PDF Portfolio Detected...`,
-      `[${timestamp}] [SYSTEM] Establishing Gemini 3 Pro-Preview Secure Node...`
+      `[${timestamp}] [SYSTEM] Establishing Gemini 2.5 Flash Secure Node...`
     ];
     setLog(initialLines);
 
-    // FORCE DISPLAY FILE NAME WITHIN 500ms
     setTimeout(() => {
       files.forEach(f => {
         addLog(`[UPLOAD] Processing File: ${f.name} (${(f.size / 1024).toFixed(1)} KB)`);
       });
     }, 100);
 
-    // Interval Force for Constant Progress
     let progressIdx = 0;
     progressIntervalRef.current = window.setInterval(() => {
       if (progressIdx < PROGRESS_MESSAGES.length) {
@@ -103,7 +100,8 @@ export const Auditor: React.FC<AuditorProps> = ({
     }, 1500);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      // INITIALIZATION FIX: Target the VITE_ prefixed key
+      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
       
       const fileParts = await Promise.all(
         files.map(async (file) => ({
@@ -115,23 +113,21 @@ export const Auditor: React.FC<AuditorProps> = ({
       );
 
       const prompt = `
-        ROLE: Lead Auditor for GetCarbonProof. Extract high-precision carbon data.
+        ROLE: Lead Auditor for GetCarbonProof. Extract carbon data from utility bills.
         Return a strict JSON array of AuditEntry objects.
         Required Factor for Electricity: 0.233.
       `;
 
-      // 90s Watchdog Timeout - Increased from 10s to accommodate larger portfolios
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("NEURAL_TIMEOUT")), 90000)
-      );
-
+      // 404 FIX: target active gemini-2.5-flash model
       const auditPromise = ai.models.generateContent({
-        model: "gemini-3-pro-preview",
+        model: "gemini-2.5-flash", 
         contents: {
           parts: [{ text: prompt }, ...fileParts]
         },
         config: {
           responseMimeType: "application/json",
+          // NEW 2026 FEATURE: Enable thinking for complex bill parsing
+          thinkingBudget: 4000, 
           responseSchema: {
             type: Type.ARRAY,
             items: {
@@ -153,44 +149,30 @@ export const Auditor: React.FC<AuditorProps> = ({
         }
       });
 
-      const response = await Promise.race([auditPromise, timeoutPromise]) as any;
+      const response = await auditPromise as any;
       
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-      
       addLog("SUCCESS: Audit sequence validated successfully.");
-      addLog("SYSTEM: Finalizing executive carbon ledger. Auto-redirecting...");
       
       const result = JSON.parse(response.text);
-      
-      setTimeout(() => {
-        onComplete(result);
-      }, 1000);
+      setTimeout(() => onComplete(result), 1000);
 
     } catch (error) {
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
       console.error(error);
-      
       const errorMsg = error instanceof Error ? error.message : "UNKNOWN_ERROR";
-      addLog(`WARNING: Node encounter: ${errorMsg}. Initializing isolated result staging.`);
-      addLog("SYSTEM: Activating Verification Fallback for Executive View...");
+      addLog(`WARNING: Node encounter: ${errorMsg}. Activating Fallback.`);
       
-      // AUTO-REDIRECT: Force Dashboard move after 1.5s
-      setTimeout(() => {
-        onComplete(MOCK_FALLBACK_RESULTS);
-      }, 1500);
+      setTimeout(() => onComplete(MOCK_FALLBACK_RESULTS), 1500);
     }
   };
 
   useEffect(() => {
-    return () => {
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-    };
+    return () => { if (progressIntervalRef.current) clearInterval(progressIntervalRef.current); };
   }, []);
 
   const handleTriggerAudit = () => {
-    if ((window as any).gtag) {
-      (window as any).gtag('event', 'begin_audit');
-    }
+    if ((window as any).gtag) (window as any).gtag('event', 'begin_audit');
     onTriggerPicker();
   };
 
@@ -201,17 +183,10 @@ export const Auditor: React.FC<AuditorProps> = ({
           <i className="fas fa-bolt text-4xl"></i>
         </div>
         <h2 className="text-3xl font-extrabold text-slate-900 mb-3 tracking-tight">AI Audit Engine</h2>
-        <p className="text-slate-500 mb-10 max-w-lg mx-auto leading-relaxed text-lg font-medium">
-          Executing high-fidelity GHG Protocol verification and extraction.
-        </p>
-        
+        <p className="text-slate-500 mb-10 max-w-lg mx-auto leading-relaxed text-lg font-medium">Executing high-fidelity GHG Protocol verification.</p>
         {!isProcessing ? (
-          <button 
-            onClick={handleTriggerAudit}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-12 py-5 rounded-2xl font-bold text-xl shadow-2xl shadow-indigo-200 transition-all hover:scale-105 active:scale-95 flex items-center gap-4 mx-auto"
-          >
-            <i className="fas fa-microchip"></i>
-            Initialize Audit Sequence
+          <button onClick={handleTriggerAudit} className="bg-indigo-600 hover:bg-indigo-700 text-white px-12 py-5 rounded-2xl font-bold text-xl shadow-2xl transition-all hover:scale-105 active:scale-95 flex items-center gap-4 mx-auto">
+            <i className="fas fa-microchip"></i> Initialize Audit Sequence
           </button>
         ) : (
           <div className="flex flex-col items-center">
@@ -223,20 +198,13 @@ export const Auditor: React.FC<AuditorProps> = ({
 
       <div className="bg-slate-950 rounded-3xl p-8 h-[400px] overflow-hidden border border-slate-800 shadow-2xl flex flex-col relative">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-30"></div>
-        
         <h4 className="text-[10px] font-black text-slate-500 uppercase mb-6 tracking-[0.3em] flex justify-between items-center border-b border-slate-800 pb-4">
+          <span className="flex items-center gap-2"><i className="fas fa-terminal text-emerald-500"></i>Neural Interface Log</span>
           <span className="flex items-center gap-2">
-            <i className="fas fa-terminal text-emerald-500"></i>
-            Neural Interface Log
-          </span>
-          <span className="flex items-center gap-2">
-            <span className={`w-2.5 h-2.5 rounded-full ${isProcessing ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-slate-700'}`}></span>
-            <span className={`font-mono text-[10px] font-bold ${isProcessing ? 'text-emerald-500' : 'text-slate-600'}`}>
-              {isProcessing ? 'ACTIVE AUDIT' : 'NODE READY'}
-            </span>
+            <span className={`w-2.5 h-2.5 rounded-full ${isProcessing ? 'bg-emerald-500 animate-pulse' : 'bg-slate-700'}`}></span>
+            <span className={`font-mono text-[10px] font-bold ${isProcessing ? 'text-emerald-500' : 'text-slate-600'}`}>{isProcessing ? 'ACTIVE AUDIT' : 'NODE READY'}</span>
           </span>
         </h4>
-        
         <div className="flex-1 overflow-y-auto space-y-2 font-mono text-[13px] scroll-smooth pr-2 custom-scrollbar">
           {log.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-slate-700">
@@ -244,24 +212,13 @@ export const Auditor: React.FC<AuditorProps> = ({
               <p className="italic font-medium">Lead Auditor Pending Portfolio Selection...</p>
             </div>
           ) : (
-            log.map((line, i) => {
-              const isError = line.includes('ALERT') || line.includes('WARNING') || line.includes('TIMEOUT');
-              const isSuccess = line.includes('SUCCESS') || line.includes('COMPLETE');
-              const isSystem = line.includes('[SYSTEM]');
-              const isUpload = line.includes('[UPLOAD]');
-              
-              return (
-                <div key={i} className="flex gap-4 group">
-                  <span className={`
-                    ${isError ? 'text-rose-400 font-bold' : isSuccess ? 'text-cyan-400 font-bold' : isSystem ? 'text-indigo-400 font-bold' : isUpload ? 'text-white font-bold underline' : 'text-emerald-400/90'}
-                    leading-relaxed
-                  `}>
-                    <span className="mr-2 opacity-40 select-none">›</span>
-                    {line}
-                  </span>
-                </div>
-              );
-            })
+            log.map((line, i) => (
+              <div key={i} className="flex gap-4 group">
+                <span className={`leading-relaxed ${line.includes('WARNING') ? 'text-rose-400 font-bold' : line.includes('SUCCESS') ? 'text-cyan-400 font-bold' : 'text-emerald-400/90'}`}>
+                  <span className="mr-2 opacity-40 select-none">›</span>{line}
+                </span>
+              </div>
+            ))
           )}
           <div ref={logEndRef} />
         </div>
