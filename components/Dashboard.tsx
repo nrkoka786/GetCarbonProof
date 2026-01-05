@@ -268,7 +268,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
           <div className="flex-1">
             <ResponsiveContainer width="100%" height="90%">
               {results.length > 0 ? (
-                // UPDATED: Forces all labels to display via staggered rotation and increased bottom margin
                 <BarChart 
                   data={summary.consolidatedData.slice(0, 8)}
                   margin={{ bottom: 60 }}
@@ -314,26 +313,40 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </div>
       </div>
 
-      {/* RECOMMENDED EXPLANATORY TEXT ADDITIONS */}
+      {/* ENHANCED: Auditor Commentary with Numeric Audit Trail */}
       <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm mt-8 space-y-6">
         <h4 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 uppercase tracking-widest text-xs flex items-center gap-3">
-          <i className="fas fa-pen-nib text-indigo-600"></i>
-          Auditor Executive Commentary
+          <i className="fas fa-file-invoice text-indigo-600"></i>
+          Detailed Categorical Impact & Commentary
         </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm leading-relaxed text-slate-600">
-          <div className="space-y-4">
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          {/* Narrative Column */}
+          <div className="space-y-6 text-sm leading-relaxed text-slate-600">
             <p>
               <strong className="text-slate-900 underline underline-offset-4 decoration-indigo-200">Inventory Distribution:</strong> This reporting period 
               highlights a concentration of emissions within Scope 1 (Direct Fuel) and Scope 3 (Purchased Goods), which 
               together constitute the vast majority of the verified organizational footprint.
             </p>
-          </div>
-          <div className="space-y-4">
             <p>
               <strong className="text-slate-900 underline underline-offset-4 decoration-indigo-200">Verification Statement:</strong> Audit procedures 
               executed include data consistency checks and cross-validation against authoritative emission factor 
               databases (EPA 2024, IPCC AR5). Calculations comply with GHG Protocol Corporate Standard requirements.
             </p>
+          </div>
+
+          {/* Numeric Audit Trail Column */}
+          <div className="bg-slate-50 p-6 rounded-2xl space-y-3 border border-slate-100">
+            <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Granular Audit Values (kg CO2e)</h5>
+            {summary.consolidatedData.slice(0, 6).map((item, idx) => (
+              <div key={idx} className="flex justify-between items-center border-b border-slate-200 pb-2">
+                <span className="text-xs font-bold text-slate-700">{item.category}</span>
+                <span className="text-xs font-mono font-black text-indigo-600">
+                  {Math.round(item.co2e_kg).toLocaleString()} kg
+                </span>
+              </div>
+            ))}
+            <p className="text-[10px] text-slate-400 italic mt-4">Note: Top 6 emission contributors shown for materiality clarity.</p>
           </div>
         </div>
       </div>
