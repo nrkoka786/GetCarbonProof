@@ -5,4 +5,4 @@ git push origin main
 
 
 
-As I mentioned before, please do not delete any lines. Please add the new code to add the 'Company Name' in the report. Enclosed the current Dashboard.tsx file.
+As I mentioned before, please do not delete any lines in dashboard.tsx file (since its working without any errors). Please add the new code to add the 'Company Name' in the report. Enclosed the current Dashboard.tsx file.

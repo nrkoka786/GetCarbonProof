@@ -16,16 +16,16 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isSample, onAuthRequired, onSignInRequired }) => {
   const { user } = useAuth();
 
-  // NEW: Logic to extract Company Name (e.g., FZ Prestige Digital) from the audit results
+  // NEW: Robust Logic to extract Company Name from the audit results array
   const clientName = useMemo(() => {
-    // Priority 1: Check if any entry has a populated company_name from the AI extraction
+    // Priority 1: Check if any entry has a populated company_name
     const found = results.find(r => r.company_name && r.company_name.trim() !== '')?.company_name;
     if (found) return found;
 
-    // Priority 2: Fallback for sample corporation mode
+    // Priority 2: Sample mode fallback
     if (isSample) return "Sample Corporation";
 
-    // Priority 3: Default fallback if extraction is still pending or missing
+    // Priority 3: Default fallback if no name is detected yet
     return "Authorized Portfolio";
   }, [results, isSample]);
 
@@ -108,7 +108,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       const imgProps = doc.getImageProperties(imgData);
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-      // UPDATED BRANDING: Company Name from document now takes the primary title spot
+      // BRANDING HEADER: Prominent Company Name from the PDF
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(100, 116, 139); 
@@ -156,7 +156,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </div>
       )}
 
-      {/* NEW: Dynamic Company Header Section for the Dashboard UI */}
+      {/* NEW: Dynamic Company Header Section for the Dashboard */}
       <div className="flex justify-between items-end border-b border-slate-100 pb-6 mb-6">
         <div>
           <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">Executive Audit Summary</span>
