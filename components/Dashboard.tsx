@@ -1,7 +1,7 @@
-
 import React, { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import { AuditEntry } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -54,35 +54,46 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
     return { total, docCount, docSources, overallConfidence, scopeData };
   }, [results, isProcessing]);
 
-  const downloadSummaryPDF = () => {
+  const downloadSummaryPDF = async () => {
     if (!user) return;
+    
+    const element = document.getElementById('audit-dashboard-view');
+    if (!element) return;
+
     try {
-      const doc = new jsPDF();
-      const margin = 20;
-      let y = margin;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = doc.internal.pageSize.getWidth();
+      const imgProps = doc.getImageProperties(imgData);
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(22);
       doc.setTextColor(55, 48, 163); 
-      doc.text('GetCarbonProof', margin, y);
+      doc.text('GetCarbonProof', 20, 20);
       
-      y += 20;
       doc.setFontSize(16);
       doc.setTextColor(15, 23, 42);
-      doc.text('EXECUTIVE AUDIT SUMMARY', margin, y);
+      doc.text('EXECUTIVE AUDIT SUMMARY', 20, 35);
+
+      doc.addImage(imgData, 'PNG', 0, 45, pdfWidth, pdfHeight);
       
-      y += 15;
+      const footerY = 45 + pdfHeight + 10;
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Total Footprint: ${(summary.total / 1000).toFixed(2)} tonnes CO2e`, margin, y);
-      y += 10;
-      doc.text(`Confidence: ${summary.overallConfidence}`, margin, y);
-      y += 10;
-      doc.text(`Authenticated User: ${user.email}`, margin, y);
+      doc.text(`Authenticated Auditor: ${user.email}`, 20, footerY);
+      doc.text(`Verification Timestamp: ${new Date().toLocaleString()}`, 20, footerY + 7);
       
-      doc.save('Executive_Carbon_Audit_Summary.pdf');
+      doc.save(`Executive_Audit_Summary_${new Date().getTime()}.pdf`);
     } catch (e) {
-      console.error("PDF generation failed", e);
+      console.error("Visual PDF generation failed", e);
     }
   };
 
@@ -97,8 +108,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
-      {/* Sample Watermark Overlay */}
+    <div id="audit-dashboard-view" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative p-4 bg-white rounded-3xl">
       {isSample && (
         <div className="absolute inset-0 pointer-events-none z-[100] flex items-center justify-center overflow-hidden">
           <div className="text-[12rem] font-black text-slate-100 rotate-[-35deg] select-none opacity-20 whitespace-nowrap uppercase tracking-widest">
@@ -176,32 +186,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
           <h4 className="text-lg font-bold text-slate-800 mb-8 flex items-center gap-2">
             <i className="fas fa-chart-pie text-indigo-600"></i>
             Carbon Scope Breakdown
-            <div className="group relative ml-1 inline-flex items-center">
-              <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center cursor-help shadow-sm border border-slate-200/50 hover:bg-slate-200 transition-colors">
-                <i className="fas fa-info text-[10px] text-[#1e3a8a]"></i>
-              </div>
-              <div className="absolute left-0 top-full mt-3 w-72 p-6 bg-slate-900/95 backdrop-blur-md text-white rounded-[1.5rem] shadow-2xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none z-50 border border-slate-800 space-y-4">
-                <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-b border-slate-800 pb-3 mb-1">Scope Protocol Definitions</div>
-                <div className="space-y-1">
-                  <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: '#6366f1' }}>Scope 1</p>
-                  <p className="text-[11px] leading-relaxed text-slate-300">
-                    Direct emissions from sources owned or controlled.
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: '#8b5cf6' }}>Scope 2</p>
-                  <p className="text-[11px] leading-relaxed text-slate-300">
-                    Indirect Energy emissions from purchased electricity, steam, heat, or cooling.
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: '#ec4899' }}>Scope 3</p>
-                  <p className="text-[11px] leading-relaxed text-slate-300">
-                    Other indirect emissions in the value chain.
-                  </p>
-                </div>
-              </div>
-            </div>
           </h4>
           <ResponsiveContainer width="100%" height="80%">
             {results.length > 0 ? (
@@ -239,7 +223,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
               Impact by Category (kg)
             </h4>
             
-            {/* Conditional Export Control */}
             {results.length > 0 && (
               user ? (
                 <button 

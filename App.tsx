@@ -1,5 +1,7 @@
-
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+// NEW: Professional Export Libraries
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { AuditTable } from './components/AuditTable';
@@ -48,26 +50,22 @@ const MainApp: React.FC = () => {
   const [isRequestAccessModalOpen, setIsRequestAccessModalOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   
-  // Internal tab state (only relevant in 'internal' view)
   const [activeTab, setActiveTab] = useState<'dashboard' | 'table' | 'auditor'>('dashboard');
   const [auditResults, setAuditResults] = useState<AuditEntry[]>([]);
   const [isAuditing, setIsAuditing] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync appView with auth state - Handle guest session data persistence
   useEffect(() => {
     const handlePostLoginFlow = async () => {
       if (user && appView === 'auth') {
         if (auditResults.length > 0) {
           setSyncing(true);
           try {
-            // CALLsaveAuditToLedger logic (persistAuditResults)
             await persistAuditResults(auditResults);
             if ((window as any).gtag) {
               (window as any).gtag('event', 'guest_data_persisted', { count: auditResults.length });
             }
-            // Logic: Redirect the user to the 'Detailed Ledger' page to show their new entry.
             setActiveTab('table'); 
           } catch (err) {
             console.error('Persistence Sequence Error:', err);
@@ -111,6 +109,40 @@ const MainApp: React.FC = () => {
     }, 100);
   }, []);
 
+  // NEW: Professional Visual Export Function
+  const handleProfessionalExport = async () => {
+    // Target the Dashboard container for capture
+    const element = document.getElementById('audit-dashboard-view');
+    if (!element) {
+        alert("Please ensure you are on the Dashboard tab to export visuals.");
+        return;
+    }
+
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2, // High DPI for audit printing
+        useCORS: true,
+        backgroundColor: "#ffffff"
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.setFontSize(10);
+      pdf.setTextColor(150);
+      pdf.text(`EXECUTIVE CARBON SUMMARY - GETCARBONPROOF AUTHENTICATED`, 10, 10);
+      pdf.text(`Verified Auditor: ${user?.email || 'Guest'}`, 10, 15);
+      
+      pdf.addImage(imgData, 'PNG', 0, 20, pdfWidth, pdfHeight);
+      pdf.save(`Executive_Carbon_Audit_${new Date().getTime()}.pdf`);
+    } catch (err) {
+      console.error("Visual Capture Failed:", err);
+    }
+  };
+
   const handleViewSample = useCallback(() => {
     setAppView('sample');
   }, []);
@@ -138,7 +170,7 @@ const MainApp: React.FC = () => {
 
   const handleSignOut = async () => {
     await signOut();
-    setAuditResults([]); // Clear on sign out
+    setAuditResults([]); 
     setAppView('landing');
   };
 
@@ -150,7 +182,6 @@ const MainApp: React.FC = () => {
     );
   }
 
-  // Syncing state overlay - Visual Feedback
   if (syncing) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-900 text-white relative overflow-hidden">
@@ -165,7 +196,6 @@ const MainApp: React.FC = () => {
     );
   }
 
-  // ROOT ROUTE: Landing Page
   if (appView === 'landing') {
     return (
       <LandingPage 
@@ -177,7 +207,6 @@ const MainApp: React.FC = () => {
     );
   }
 
-  // SAMPLE VIEW: High Fidelity Demo
   if (appView === 'sample') {
     return (
       <SampleReport 
@@ -187,7 +216,6 @@ const MainApp: React.FC = () => {
     );
   }
 
-  // AUTH VIEW: Login / Signup
   if (appView === 'auth' && !user) {
     return (
       <Auth 
@@ -232,6 +260,18 @@ const MainApp: React.FC = () => {
                 </p>
               )}
             </div>
+
+            {/* NEW: Visual Export Button (Visible when logged in and results exist) */}
+            {user && auditResults.length > 0 && activeTab === 'dashboard' && (
+              <button 
+                onClick={handleProfessionalExport}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-emerald-100 flex items-center gap-3 active:scale-95"
+              >
+                <i className="fas fa-file-pdf"></i>
+                Export Charts
+              </button>
+            )}
+
             {user ? (
               <button 
                 onClick={handleSignOut}
