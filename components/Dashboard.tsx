@@ -27,19 +27,40 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       { name: 'Scope 3', value: 0, color: '#ec4899' },
     ];
 
+    // ENHANCEMENT: Category Aggregator with Color Handshake
+    const categoryTotals: Record<string, { value: number; color: string }> = {};
+
     results.forEach(r => {
       const scopeStr = (r.scope || '').toLowerCase();
       const catStr = (r.category || '').toLowerCase();
       const val = Number(r.co2e_kg) || 0;
       
+      const categoryName = r.category || 'Other';
+      let currentColor = '#94a3b8'; // Default
+
       if (scopeStr.includes('1') || catStr.includes('fuel') || catStr.includes('diesel') || catStr.includes('gas')) {
         scopeData[0].value += val;
+        currentColor = '#6366f1'; // Match Scope 1 Indigo
       } else if (scopeStr.includes('2') || catStr.includes('electricity') || catStr.includes('utility')) {
         scopeData[1].value += val;
+        currentColor = '#8b5cf6'; // Match Scope 2 Purple
       } else {
         scopeData[2].value += val;
+        currentColor = '#ec4899'; // Match Scope 3 Pink
       }
+
+      if (!categoryTotals[categoryName]) {
+        categoryTotals[categoryName] = { value: 0, color: currentColor };
+      }
+      categoryTotals[categoryName].value += val;
     });
+
+    // Create the professional consolidated array for the Bar Chart
+    const consolidatedData = Object.keys(categoryTotals).map(cat => ({
+      category: cat,
+      co2e_kg: categoryTotals[cat].value,
+      fill: categoryTotals[cat].color // Logic for matching bar colors
+    })).sort((a, b) => b.co2e_kg - a.co2e_kg);
 
     let overallConfidence = 'Pending';
     if (isProcessing) {
@@ -51,7 +72,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       else overallConfidence = 'Medium';
     }
 
-    return { total, docCount, docSources, overallConfidence, scopeData };
+    return { total, docCount, docSources, overallConfidence, scopeData, consolidatedData };
   }, [results, isProcessing]);
 
   const downloadSummaryPDF = async () => {
@@ -186,6 +207,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
           <h4 className="text-lg font-bold text-slate-800 mb-8 flex items-center gap-2">
             <i className="fas fa-chart-pie text-indigo-600"></i>
             Carbon Scope Breakdown
+            <i className="fas fa-circle-info text-slate-300 text-sm cursor-help" title="Scope 1: Direct emissions | Scope 2: Purchased energy | Scope 3: Indirect value chain"></i>
           </h4>
           <ResponsiveContainer width="100%" height="80%">
             {results.length > 0 ? (
@@ -246,12 +268,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
           <div className="flex-1">
             <ResponsiveContainer width="100%" height="90%">
               {results.length > 0 ? (
-                <BarChart data={results.filter(r => r.co2e_kg > 0).sort((a, b) => b.co2e_kg - a.co2e_kg).slice(0, 8)}>
+                // UPDATED: Forces all labels to display via staggered rotation and increased bottom margin
+                <BarChart 
+                  data={summary.consolidatedData.slice(0, 8)}
+                  margin={{ bottom: 60 }}
+                >
                   <XAxis 
                     dataKey="category" 
-                    tick={{fontSize: 11, fill: '#94a3b8', fontWeight: 600}} 
+                    tick={{fontSize: 9, fill: '#64748b', fontWeight: 700}} 
                     axisLine={false} 
                     tickLine={false} 
+                    interval={0}
+                    angle={-25}
+                    textAnchor="end"
                     dy={10}
                   />
                   <YAxis 
@@ -266,11 +295,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
                   />
                   <Bar 
                     dataKey="co2e_kg" 
-                    fill="#6366f1" 
                     radius={[8, 8, 0, 0]} 
                     animationDuration={1800}
                     barSize={40}
-                  />
+                  >
+                    {summary.consolidatedData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
                 </BarChart>
               ) : (
                 <div className="flex items-center justify-center h-full text-slate-300 font-medium italic">
