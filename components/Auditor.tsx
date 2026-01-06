@@ -34,6 +34,9 @@ const PROGRESS_MESSAGES = [
   "Applying temporal alignment to reporting periods..."
 ];
 
+// SURGICAL ADDITION: Sleep utility for exponential backoff
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export const Auditor: React.FC<AuditorProps> = ({ 
   filesToProcess, 
   onComplete, 
@@ -99,71 +102,92 @@ export const Auditor: React.FC<AuditorProps> = ({
       }
     }, 1500);
 
-    try {
-      // INITIALIZATION FIX: Target the VITE_ prefixed key
-      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-      
-      const fileParts = await Promise.all(
-        files.map(async (file) => ({
-          inlineData: {
-            data: await fileToBase64(file),
-            mimeType: file.type || "application/pdf"
-          }
-        }))
-      );
+    // SURGICAL ADDITION: Retry Loop Variables
+    const maxRetries = 3;
+    let attempt = 1;
+    let auditFinished = false;
 
-      const prompt = `
-        ROLE: Lead Auditor for GetCarbonProof. Extract carbon data from utility bills.
-        Return a strict JSON array of AuditEntry objects.
-        Required Factor for Electricity: 0.233.
-      `;
+    while (attempt <= maxRetries && !auditFinished) {
+      try {
+        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+        
+        const fileParts = await Promise.all(
+          files.map(async (file) => ({
+            inlineData: {
+              data: await fileToBase64(file),
+              mimeType: file.type || "application/pdf"
+            }
+          }))
+        );
 
-      // 404 FIX: target active gemini-2.5-flash model
-      const auditPromise = ai.models.generateContent({
-        model: "gemini-2.5-flash", 
-        contents: {
-          parts: [{ text: prompt }, ...fileParts]
-        },
-        config: {
-          responseMimeType: "application/json",
-          // NEW 2026 FEATURE: Enable thinking for complex bill parsing
-          thinkingBudget: 4000, 
-          responseSchema: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                date_range: { type: Type.STRING },
-                category: { type: Type.STRING },
-                doc_type: { type: Type.STRING },
-                scope: { type: Type.STRING },
-                usage_value: { type: Type.NUMBER },
-                usage_unit: { type: Type.STRING },
-                co2e_kg: { type: Type.NUMBER },
-                confidence_score: { type: Type.STRING },
-                audit_note: { type: Type.STRING },
-              },
-              required: ["date_range", "category", "usage_value", "usage_unit", "co2e_kg", "confidence_score", "audit_note", "doc_type", "scope"]
+        const prompt = `
+          ROLE: Lead Auditor for GetCarbonProof. Extract carbon data from utility bills.
+          Return a strict JSON array of AuditEntry objects.
+          Required Factor for Electricity: 0.233.
+        `;
+
+        const response = await ai.models.generateContent({
+          model: "gemini-2.5-flash", 
+          contents: {
+            parts: [{ text: prompt }, ...fileParts]
+          },
+          config: {
+            responseMimeType: "application/json",
+            thinkingBudget: 4000, 
+            responseSchema: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  date_range: { type: Type.STRING },
+                  category: { type: Type.STRING },
+                  doc_type: { type: Type.STRING },
+                  scope: { type: Type.STRING },
+                  usage_value: { type: Type.NUMBER },
+                  usage_unit: { type: Type.STRING },
+                  co2e_kg: { type: Type.NUMBER },
+                  confidence_score: { type: Type.STRING },
+                  audit_note: { type: Type.STRING },
+                },
+                required: ["date_range", "category", "usage_value", "usage_unit", "co2e_kg", "confidence_score", "audit_note", "doc_type", "scope"]
+              }
             }
           }
+        }) as any;
+        
+        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+        addLog("SUCCESS: Audit sequence validated successfully.");
+        
+        const result = JSON.parse(response.text);
+        auditFinished = true; // Mark as done to exit loop
+        setTimeout(() => onComplete(result), 1000);
+
+      } catch (error: any) {
+        // SURGICAL ADDITION: Handle 429 Quota Error with Sleep
+        const isQuotaError = error.status === 429 || error.message?.includes('429');
+        
+        if (isQuotaError && attempt < maxRetries) {
+          const delayMatch = error.message?.match(/retryDelay":"(\d+)s/);
+          const delaySeconds = delayMatch ? parseInt(delayMatch[1]) : 60;
+          
+          addLog(`WARNING: Node encounter: Quota Exceeded (429).`);
+          addLog(`SYSTEM: Cooling down node for ${delaySeconds}s...`);
+          addLog(`RETRY: Re-attempting extraction (${attempt}/${maxRetries})...`);
+          
+          await sleep(delaySeconds * 1000);
+          attempt++;
+          continue; // Re-run the loop
         }
-      });
 
-      const response = await auditPromise as any;
-      
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-      addLog("SUCCESS: Audit sequence validated successfully.");
-      
-      const result = JSON.parse(response.text);
-      setTimeout(() => onComplete(result), 1000);
-
-    } catch (error) {
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-      console.error(error);
-      const errorMsg = error instanceof Error ? error.message : "UNKNOWN_ERROR";
-      addLog(`WARNING: Node encounter: ${errorMsg}. Activating Fallback.`);
-      
-      setTimeout(() => onComplete(MOCK_FALLBACK_RESULTS), 1500);
+        // ORIGINAL CATCH LOGIC PRESERVED
+        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+        console.error(error);
+        const errorMsg = error instanceof Error ? error.message : "UNKNOWN_ERROR";
+        addLog(`WARNING: Node encounter: ${errorMsg}. Activating Fallback.`);
+        
+        setTimeout(() => onComplete(MOCK_FALLBACK_RESULTS), 1500);
+        break; // Exit loop on permanent failure
+      }
     }
   };
 
