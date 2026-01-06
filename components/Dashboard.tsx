@@ -75,14 +75,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       fill: categoryTotals[cat].color // Logic for matching bar colors
     })).sort((a, b) => b.co2e_kg - a.co2e_kg);
 
+    // SURGICAL REPLACEMENT: Materiality-Weighted Confidence Logic
     let overallConfidence = 'Pending';
     if (isProcessing) {
       overallConfidence = 'Evaluating...';
     } else if (results.length > 0) {
-      const scores = results.map(r => r.confidence_score);
-      if (scores.includes('Low')) overallConfidence = 'Low';
-      else if (scores.every(s => s === 'High')) overallConfidence = 'High';
-      else overallConfidence = 'Medium';
+      const totalWeight = results.reduce((sum, r) => sum + (Number(r.co2e_kg) || 0), 0);
+      
+      const highConfidenceWeight = results.reduce((sum, r) => {
+        return r.confidence_score === 'High' ? sum + (Number(r.co2e_kg) || 0) : sum;
+      }, 0);
+
+      const highWeightPercentage = totalWeight > 0 ? (highConfidenceWeight / totalWeight) * 100 : 0;
+
+      if (highWeightPercentage >= 90) {
+        overallConfidence = 'High';
+      } else if (highWeightPercentage >= 60) {
+        overallConfidence = 'Medium';
+      } else {
+        overallConfidence = 'Low';
+      }
     }
 
     return { total, docCount, docSources, overallConfidence, scopeData, consolidatedData };
