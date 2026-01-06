@@ -21,7 +21,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
     const found = results.find(r => r.company_name && r.company_name.trim() !== '')?.company_name;
     if (found) return found;
     if (isSample) return "Sample Corporation";
-    return ""; // Removed "Authorized Portfolio" text per instructions
+    return ""; // REMOVED: "Authorized Portfolio" text fallback
   }, [results, isSample]);
 
   const summary = useMemo(() => {
@@ -35,7 +35,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       { name: 'Scope 3', value: 0, color: '#ec4899' },
     ];
 
-    // ENHANCEMENT: Category Aggregator with Color Handshake
     const categoryTotals: Record<string, { value: number; color: string }> = {};
 
     results.forEach(r => {
@@ -44,17 +43,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       const val = Number(r.co2e_kg) || 0;
       
       const categoryName = r.category || 'Other';
-      let currentColor = '#94a3b8'; // Default
+      let currentColor = '#94a3b8';
 
       if (scopeStr.includes('1') || catStr.includes('fuel') || catStr.includes('diesel') || catStr.includes('gas')) {
         scopeData[0].value += val;
-        currentColor = '#6366f1'; // Match Scope 1 Indigo
+        currentColor = '#6366f1';
       } else if (scopeStr.includes('2') || catStr.includes('electricity') || catStr.includes('utility')) {
         scopeData[1].value += val;
-        currentColor = '#8b5cf6'; // Match Scope 2 Purple
+        currentColor = '#8b5cf6';
       } else {
         scopeData[2].value += val;
-        currentColor = '#ec4899'; // Match Scope 3 Pink
+        currentColor = '#ec4899';
       }
 
       if (!categoryTotals[categoryName]) {
@@ -63,11 +62,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       categoryTotals[categoryName].value += val;
     });
 
-    // Create the professional consolidated array for the Bar Chart
     const consolidatedData = Object.keys(categoryTotals).map(cat => ({
       category: cat,
       co2e_kg: categoryTotals[cat].value,
-      fill: categoryTotals[cat].color // Logic for matching bar colors
+      fill: categoryTotals[cat].color 
     })).sort((a, b) => b.co2e_kg - a.co2e_kg);
 
     let overallConfidence = 'Pending';
@@ -103,7 +101,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       const imgProps = doc.getImageProperties(imgData);
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-      // PDF HEADER: Dynamic title based on client name or report type
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(100, 116, 139); 
@@ -151,7 +148,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </div>
       )}
 
-      {/* DASHBOARD HEADER: Export Charts button removed per instructions */}
+      {/* DASHBOARD HEADER: "Export Charts" and Auth buttons removed per instruction */}
       <div className="flex justify-between items-end border-b border-slate-100 pb-6 mb-6">
         <div>
           <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">Executive Audit Summary</span>
@@ -238,7 +235,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
           <h4 className="text-lg font-bold text-slate-800 mb-8 flex items-center gap-2">
             <i className="fas fa-chart-pie text-indigo-600"></i>
             Carbon Scope Breakdown
-            <i className="fas fa-circle-info text-slate-300 text-sm cursor-help" title="Scope 1: Direct emissions | Scope 2: Purchased energy | Scope 3: Indirect value chain"></i>
           </h4>
           <ResponsiveContainer width="100%" height="80%">
             {results.length > 0 ? (
@@ -263,7 +259,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
               </PieChart>
             ) : (
               <div className="flex items-center justify-center h-full text-slate-300 font-medium italic">
-                Pending Portfolio Audit...
+                Awaiting Audit Results...
               </div>
             )}
           </ResponsiveContainer>
@@ -316,7 +312,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
                 </BarChart>
               ) : (
                 <div className="flex items-center justify-center h-full text-slate-300 font-medium italic">
-                  Awaiting Source Data...
+                  No source data found...
                 </div>
               )}
             </ResponsiveContainer>
@@ -324,7 +320,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </div>
       </div>
 
-      {/* AUDITOR COMMENTARY: Logic expanded to show 10 granular rows */}
       <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm mt-8 space-y-6">
         <h4 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 uppercase tracking-widest text-xs flex items-center gap-3">
           <i className="fas fa-file-invoice text-indigo-600"></i>
@@ -345,7 +340,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
             </p>
           </div>
 
-          {/* Granular Audit Trail Column: slice(0, 10) ensures all data appears */}
           <div className="bg-slate-50 p-6 rounded-2xl space-y-3 border border-slate-100">
             <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Granular Audit Values (kg CO2e)</h5>
             {summary.consolidatedData.slice(0, 10).map((item, idx) => (
