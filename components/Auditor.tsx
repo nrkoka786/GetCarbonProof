@@ -179,24 +179,24 @@ export const Auditor: React.FC<AuditorProps> = ({
           continue; // Re-run the loop
         }
 
-        // SURGICAL ADDITION: Final Failure Protocol after 3 attempts
+        // SURGICAL REPLACEMENT: Professional Failure Message (No Mock Data)
         if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
         console.error(error);
         const errorMsg = error instanceof Error ? error.message : "UNKNOWN_ERROR";
 
         if (isQuotaError && attempt >= maxRetries) {
           addLog(`CRITICAL: Audit sequence failed after ${maxRetries} attempts.`);
-          addLog(`REASON: High-traffic volume on Neural Node. Quota permanently exhausted.`);
-          addLog(`ACTION: Please wait 60 seconds and click "Initialize Audit Sequence" again.`);
+          addLog(`REASON: AI Node is currently busy processing high traffic.`);
+          addLog(`ACTION: Please wait a few minutes and try running the report again.`); 
         } else {
           addLog(`WARNING: Node encounter: ${errorMsg}.`);
-          addLog(`ACTION: System entering safe fallback mode.`);
+          addLog(`ACTION: System suspended. Please retry later.`);
         }
         
         // Reset processing state so button is clickable again
         setIsProcessing(false);
-        setTimeout(() => onComplete(MOCK_FALLBACK_RESULTS), 1500);
-        break; // Exit loop on permanent failure
+        // REMOVED: Fallback to mock results for data integrity
+        break; 
       }
     }
   };
