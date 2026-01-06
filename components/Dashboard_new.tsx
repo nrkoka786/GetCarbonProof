@@ -16,7 +16,7 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isSample, onAuthRequired, onSignInRequired }) => {
   const { user } = useAuth();
 
-  // ADDITION: Extract "FZ Prestige Digital" from results array
+  // ADDITION: Robust Logic to extract Company Name (e.g., FZ Prestige Digital) from the results
   const clientName = useMemo(() => {
     const found = results.find(r => r.company_name && r.company_name.trim() !== '')?.company_name;
     if (found) return found;
@@ -103,7 +103,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       const imgProps = doc.getImageProperties(imgData);
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-      // UPDATED BRANDING: Position GetCarbonProof as the Authenticator
+      // BRANDING HEADER: Prominent Company Name from the PDF
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(100, 116, 139); 
@@ -151,13 +151,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </div>
       )}
 
-      {/* NEW: High-Visibility Header Section */}
+      {/* ADDITION: Dynamic Header showing Company Name on Dashboard UI */}
       <div className="flex justify-between items-end border-b border-slate-100 pb-6 mb-6">
         <div>
           <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">Executive Audit Summary</span>
           <h2 className="text-3xl font-black text-slate-900 mt-1">{clientName}</h2>
         </div>
         <div className="flex gap-3">
+          {/* Maintained: Export Charts Button as required */}
           <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-2">
             <i className="fas fa-file-export"></i> EXPORT CHARTS
           </button>
@@ -347,6 +348,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
             </p>
           </div>
 
+          {/* Granular Audit Trail Column */}
           <div className="bg-slate-50 p-6 rounded-2xl space-y-3 border border-slate-100">
             <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Granular Audit Values (kg CO2e)</h5>
             {summary.consolidatedData.slice(0, 10).map((item, idx) => (

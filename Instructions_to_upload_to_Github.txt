@@ -4,5 +4,14 @@ git commit -m "feat: add auditor commentary and sync secure node"
 git push origin main
 
 
+I am enclosing my current Dashboard.tsx which has 375 lines and is working perfectly without errors.
 
-As I mentioned before, please do not delete any lines in dashboard.tsx file (since its working without any errors). Please add the new code to add the 'Company Name' in the report. Enclosed the current Dashboard.tsx file.
+CRITICAL INSTRUCTIONS:
+
+Zero Deletions: Do not delete, merge, or shorten any existing lines of code (including imports, interfaces, chart logic, or CSS classes).
+
+Surgical Addition Only: Only insert the new logic for clientName (Company Name extraction) and the new Header UI section.
+
+Line Count Verification: The final file MUST have more than 375 lines. If the result has 375 lines or fewer, you have failed the instruction.
+
+Use My File: Use the exact structure of the file I just uploaded as the absolute base.
