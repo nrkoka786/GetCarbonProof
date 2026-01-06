@@ -16,12 +16,12 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isSample, onAuthRequired, onSignInRequired }) => {
   const { user } = useAuth();
 
-  // SURGICAL ADDITION: Robust Logic to extract Company Name without visible fallback
+  // SURGICAL ADDITION: Robust Logic to extract Company Name (e.g., FZ Prestige Digital) from results
   const clientName = useMemo(() => {
     const found = results.find(r => r.company_name && r.company_name.trim() !== '')?.company_name;
     if (found) return found;
     if (isSample) return "Sample Corporation";
-    return ""; // REMOVED: "Authorized Portfolio" text fallback
+    return ""; // DEFINITIVELY REMOVED: "Authorized Portfolio" text
   }, [results, isSample]);
 
   const summary = useMemo(() => {
@@ -151,21 +151,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </div>
       )}
 
-      {/* DASHBOARD HEADER: "Export Charts" DEFINITIVELY REMOVED | "Sign in to Save" Logic RESTORED */}
+      {/* SURGICAL ADDITION: Branded Dashboard Header showing the Company Name | Export Charts DEFINITIVELY REMOVED */}
       <div className="flex justify-between items-end border-b border-slate-100 pb-6 mb-6">
         <div>
           <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">Executive Audit Summary</span>
           <h2 className="text-3xl font-black text-slate-900 mt-1">{clientName}</h2>
         </div>
         <div className="flex gap-3">
-          {!user && (
-            <button 
-              onClick={onSignInRequired}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg active:scale-95 flex items-center gap-2"
-            >
-              <i className="fas fa-sign-in-alt"></i> Sign in to Save
-            </button>
-          )}
+          {/* REMOVED: Export Charts Button per instruction */}
           {results.length > 0 && user && (
             <button 
               onClick={downloadSummaryPDF}
@@ -332,7 +325,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </div>
       </div>
 
-      {/* Auditor Commentary Card with Numeric Audit Trail Column expanded to show 10 items */}
+      {/* Auditor Commentary Card with Numeric Audit Trail */}
       <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm mt-8 space-y-6">
         <h4 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 uppercase tracking-widest text-xs flex items-center gap-3">
           <i className="fas fa-file-invoice text-indigo-600"></i>
