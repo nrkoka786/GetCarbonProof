@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { jsPDF } from 'jspdf';
 import { AuditEntry } from '../types';
@@ -21,6 +20,33 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
       );
     });
   }, [results, searchTerm]);
+
+  // SURGICAL ADDITION: CSV Export Logic for Audit Trail
+  const exportToCSV = () => {
+    const headers = ["Date Range", "Category", "Doc Type", "Scope", "Usage", "Unit", "CO2e (kg)", "Confidence", "Audit Note"];
+    const rows = results.map(r => [
+      r.date_range,
+      r.category,
+      r.doc_type,
+      r.scope,
+      r.usage_value,
+      r.usage_unit,
+      r.co2e_kg,
+      r.confidence_score,
+      `"${(r.audit_note || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Carbon_Audit_Trail_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const downloadAuditProof = (entry: AuditEntry) => {
     try {
@@ -140,6 +166,14 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
           />
         </div>
         <div className="flex gap-2">
+          {/* SURGICAL ADDITION: Export Button added to the header row */}
+          <button 
+            onClick={exportToCSV}
+            className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
+          >
+            <i className="fas fa-file-csv text-emerald-600"></i>
+            Export Audit Trail
+          </button>
           <span className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-indigo-100 flex items-center gap-2">
             <i className="fas fa-shield-halved"></i>
             {filteredResults.length} Verified Entries
@@ -159,6 +193,7 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
                 <th className="px-8 py-5">Unit</th>
                 <th className="px-8 py-5">Scope</th>
                 <th className="px-8 py-5">CO2e (kg)</th>
+                <th className="px-8 py-5">Confidence</th>
                 <th className="px-8 py-5 text-right">Certificate</th>
               </tr>
             </thead>
@@ -180,6 +215,10 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
                   </td>
                   <td className="px-8 py-5">
                     <span className="text-slate-600 font-medium">{entry.category || 'N/A'}</span>
+                    {/* SURGICAL ADDITION: In-line Citation Note */}
+                    <p className="text-[10px] text-slate-400 italic mt-1 line-clamp-1 group-hover:line-clamp-none transition-all max-w-[200px]">
+                      {entry.audit_note}
+                    </p>
                   </td>
                   <td className="px-8 py-5 font-bold text-slate-900">
                     {(entry.usage_value || 0).toLocaleString()}
@@ -200,6 +239,17 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
                   <td className="px-8 py-5">
                     <span className="font-black text-indigo-600 tabular-nums">
                       {(entry.co2e_kg || 0).toLocaleString()}
+                    </span>
+                  </td>
+                  {/* SURGICAL ADDITION: Confidence Badge Column */}
+                  <td className="px-8 py-5">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                      entry.confidence_score === 'High' 
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
+                        : 'bg-amber-50 text-amber-700 border border-amber-100'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${entry.confidence_score === 'High' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                      {entry.confidence_score}
                     </span>
                   </td>
                   <td className="px-8 py-5 text-right">
