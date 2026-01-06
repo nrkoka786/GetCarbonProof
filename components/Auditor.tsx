@@ -179,7 +179,7 @@ export const Auditor: React.FC<AuditorProps> = ({
           continue; // Re-run the loop
         }
 
-        // SURGICAL REPLACEMENT: Professional Failure Message (No Mock Data)
+        // SURGICAL REPLACEMENT: Professional Light Blue Action Messages
         if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
         console.error(error);
         const errorMsg = error instanceof Error ? error.message : "UNKNOWN_ERROR";
@@ -187,15 +187,15 @@ export const Auditor: React.FC<AuditorProps> = ({
         if (isQuotaError && attempt >= maxRetries) {
           addLog(`CRITICAL: Audit sequence failed after ${maxRetries} attempts.`);
           addLog(`REASON: AI Node is currently busy processing high traffic.`);
-          addLog(`ACTION: Please wait a few minutes and try running the report again.`); 
+          addLog(`INSTRUCTION: Please wait a few minutes and try running the report again.`); 
+          addLog(`INSTRUCTION: Click the 'Initialize Audit Sequence' button to run the Report Again.`);
         } else {
           addLog(`WARNING: Node encounter: ${errorMsg}.`);
-          addLog(`ACTION: System suspended. Please retry later.`);
+          addLog(`INSTRUCTION: System suspended. Please retry later.`);
         }
         
         // Reset processing state so button is clickable again
         setIsProcessing(false);
-        // REMOVED: Fallback to mock results for data integrity
         break; 
       }
     }
@@ -248,7 +248,12 @@ export const Auditor: React.FC<AuditorProps> = ({
           ) : (
             log.map((line, i) => (
               <div key={i} className="flex gap-4 group">
-                <span className={`leading-relaxed ${line.includes('WARNING') || line.includes('CRITICAL') ? 'text-rose-400 font-bold' : line.includes('SUCCESS') ? 'text-cyan-400 font-bold' : 'text-emerald-400/90'}`}>
+                <span className={`leading-relaxed ${
+                  line.includes('WARNING') || line.includes('CRITICAL') ? 'text-rose-400 font-bold' : 
+                  line.includes('INSTRUCTION') ? 'text-cyan-300 font-bold' : // SURGICAL ADDITION: Light Blue (Cyan) font
+                  line.includes('SUCCESS') ? 'text-cyan-400 font-bold' : 
+                  'text-emerald-400/90'
+                }`}>
                   <span className="mr-2 opacity-40 select-none">›</span>{line}
                 </span>
               </div>
