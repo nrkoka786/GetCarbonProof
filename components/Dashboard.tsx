@@ -16,12 +16,12 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isSample, onAuthRequired, onSignInRequired }) => {
   const { user } = useAuth();
 
-  // ADDITION: Extract "FZ Prestige Digital" from results array
+  // Extraction logic: Searching for Company Name without a visible fallback string
   const clientName = useMemo(() => {
     const found = results.find(r => r.company_name && r.company_name.trim() !== '')?.company_name;
     if (found) return found;
     if (isSample) return "Sample Corporation";
-    return "Authorized Portfolio";
+    return ""; // Removed "Authorized Portfolio" text per instructions
   }, [results, isSample]);
 
   const summary = useMemo(() => {
@@ -103,7 +103,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       const imgProps = doc.getImageProperties(imgData);
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-      // UPDATED BRANDING: Position GetCarbonProof as the Authenticator
+      // PDF HEADER: Dynamic title based on client name or report type
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(100, 116, 139); 
@@ -111,11 +111,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       
       doc.setFontSize(22);
       doc.setTextColor(15, 23, 42);
-      doc.text(clientName.toUpperCase(), 20, 28);
+      doc.text(clientName ? clientName.toUpperCase() : 'EXECUTIVE AUDIT SUMMARY', 20, 28);
       
       doc.setFontSize(14);
       doc.setTextColor(79, 70, 229);
-      doc.text('EXECUTIVE AUDIT SUMMARY', 20, 38);
+      doc.text(clientName ? 'EXECUTIVE AUDIT SUMMARY' : '', 20, 38);
 
       doc.addImage(imgData, 'PNG', 0, 45, pdfWidth, pdfHeight);
       
@@ -125,7 +125,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       doc.text(`Authenticated Auditor: ${user.email}`, 20, footerY);
       doc.text(`Verification Timestamp: ${new Date().toLocaleString()}`, 20, footerY + 7);
       
-      doc.save(`${clientName.replace(/\s+/g, '_')}_Carbon_Audit.pdf`);
+      doc.save(`${clientName ? clientName.replace(/\s+/g, '_') : 'Executive'}_Carbon_Audit.pdf`);
     } catch (e) {
       console.error("Visual PDF generation failed", e);
     }
@@ -151,16 +151,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </div>
       )}
 
-      {/* NEW: High-Visibility Header Section */}
+      {/* DASHBOARD HEADER: Export Charts button removed per instructions */}
       <div className="flex justify-between items-end border-b border-slate-100 pb-6 mb-6">
         <div>
           <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">Executive Audit Summary</span>
           <h2 className="text-3xl font-black text-slate-900 mt-1">{clientName}</h2>
         </div>
         <div className="flex gap-3">
-          <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-2">
-            <i className="fas fa-file-export"></i> EXPORT CHARTS
-          </button>
           {results.length > 0 && user && (
             <button 
               onClick={downloadSummaryPDF}
@@ -327,8 +324,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </div>
       </div>
 
+      {/* AUDITOR COMMENTARY: Logic expanded to show 10 granular rows */}
       <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm mt-8 space-y-6">
-        <h4 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 flex items-center gap-3">
+        <h4 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 uppercase tracking-widest text-xs flex items-center gap-3">
           <i className="fas fa-file-invoice text-indigo-600"></i>
           Detailed Categorical Impact & Commentary
         </h4>
@@ -347,6 +345,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
             </p>
           </div>
 
+          {/* Granular Audit Trail Column: slice(0, 10) ensures all data appears */}
           <div className="bg-slate-50 p-6 rounded-2xl space-y-3 border border-slate-100">
             <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Granular Audit Values (kg CO2e)</h5>
             {summary.consolidatedData.slice(0, 10).map((item, idx) => (
