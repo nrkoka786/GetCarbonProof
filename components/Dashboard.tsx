@@ -16,7 +16,7 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isSample, onAuthRequired, onSignInRequired }) => {
   const { user } = useAuth();
 
-  // SURGICAL ADDITION: Extract Company Name (e.g., FZ Prestige Digital) without visible fallback
+  // SURGICAL ADDITION: Robust Logic to extract Company Name without visible fallback
   const clientName = useMemo(() => {
     const found = results.find(r => r.company_name && r.company_name.trim() !== '')?.company_name;
     if (found) return found;
@@ -151,13 +151,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </div>
       )}
 
-      {/* DASHBOARD HEADER: "Export Charts" and Auth buttons strictly removed per instruction */}
+      {/* DASHBOARD HEADER: Export button strictly removed | Auth button restored */}
       <div className="flex justify-between items-end border-b border-slate-100 pb-6 mb-6">
         <div>
           <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">Executive Audit Summary</span>
           <h2 className="text-3xl font-black text-slate-900 mt-1">{clientName}</h2>
         </div>
         <div className="flex gap-3">
+          {!user && (
+            <button 
+              onClick={onSignInRequired}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg active:scale-95 flex items-center gap-2"
+            >
+              <i className="fas fa-sign-in-alt"></i> Sign in to Save
+            </button>
+          )}
           {results.length > 0 && user && (
             <button 
               onClick={downloadSummaryPDF}
@@ -331,8 +339,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
           Detailed Categorical Impact & Commentary
         </h4>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 text-sm leading-relaxed text-slate-600">
-          <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          {/* Narrative Column */}
+          <div className="space-y-6 text-sm leading-relaxed text-slate-600">
             <p>
               <strong className="text-slate-900 underline underline-offset-4 decoration-indigo-200">Inventory Distribution:</strong> This reporting period 
               highlights a concentration of emissions within Scope 1 (Direct Fuel) and Scope 3 (Purchased Goods), which 
@@ -345,7 +354,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
             </p>
           </div>
 
-          {/* Granular Audit Values logic preserved and expanded to show 10 items */}
+          {/* Numeric Audit Trail Column */}
           <div className="bg-slate-50 p-6 rounded-2xl space-y-3 border border-slate-100">
             <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Granular Audit Values (kg CO2e)</h5>
             {summary.consolidatedData.slice(0, 10).map((item, idx) => (
