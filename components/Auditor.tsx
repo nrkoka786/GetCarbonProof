@@ -102,8 +102,8 @@ export const Auditor: React.FC<AuditorProps> = ({
       }
     }, 1500);
 
-    // SURGICAL ADDITION: Retry Loop Variables
-    const maxRetries = 3;
+    // SURGICAL ADDITION: Increased Retry Loop Variables to 5 for high-volume safety
+    const maxRetries = 5;
     let attempt = 1;
     let auditFinished = false;
 
@@ -250,7 +250,7 @@ export const Auditor: React.FC<AuditorProps> = ({
               <div key={i} className="flex gap-4 group">
                 <span className={`leading-relaxed ${
                   line.includes('WARNING') || line.includes('CRITICAL') ? 'text-rose-400 font-bold' : 
-                  line.includes('INSTRUCTION') ? 'text-cyan-300 font-bold' : // SURGICAL ADDITION: Light Blue (Cyan) font
+                  line.includes('INSTRUCTION') ? 'text-cyan-300 font-bold' : // Light Blue (Cyan) font
                   line.includes('SUCCESS') ? 'text-cyan-400 font-bold' : 
                   'text-emerald-400/90'
                 }`}>
