@@ -80,14 +80,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
     if (isProcessing) {
       overallConfidence = 'Evaluating...';
     } else if (results.length > 0) {
+      // 1. Calculate the total weight of the audit in kg
       const totalWeight = results.reduce((sum, r) => sum + (Number(r.co2e_kg) || 0), 0);
       
+      // 2. Sum the weight of only those entries with 'High' confidence
       const highConfidenceWeight = results.reduce((sum, r) => {
         return r.confidence_score === 'High' ? sum + (Number(r.co2e_kg) || 0) : sum;
       }, 0);
 
+      // 3. Determine the percentage of the total mass that is High Confidence
       const highWeightPercentage = totalWeight > 0 ? (highConfidenceWeight / totalWeight) * 100 : 0;
 
+      // 4. Professional Thresholds: >90% High Mass = High Rating
       if (highWeightPercentage >= 90) {
         overallConfidence = 'High';
       } else if (highWeightPercentage >= 60) {
