@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
+import { supabase } from '../lib/supabase'; // SURGICAL ADDITION
+import { useAuth } from '../contexts/AuthContext'; // SURGICAL ADDITION
 import { AuditEntry } from '../types';
 
 interface AuditorProps {
@@ -34,7 +36,6 @@ const PROGRESS_MESSAGES = [
   "Applying temporal alignment to reporting periods..."
 ];
 
-// SURGICAL ADDITION: Sleep utility for exponential backoff
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const Auditor: React.FC<AuditorProps> = ({ 
@@ -44,6 +45,7 @@ export const Auditor: React.FC<AuditorProps> = ({
   setIsProcessing,
   onTriggerPicker 
 }) => {
+  const { user } = useAuth(); // SURGICAL ADDITION
   const [log, setLog] = useState<string[]>([]);
   const logEndRef = useRef<HTMLDivElement>(null);
   const progressIntervalRef = useRef<number | null>(null);
@@ -102,7 +104,6 @@ export const Auditor: React.FC<AuditorProps> = ({
       }
     }, 1500);
 
-    // SURGICAL ADDITION: Increased Retry Loop Variables to 5 for high-volume safety
     const maxRetries = 5;
     let attempt = 1;
     let auditFinished = false;
@@ -159,11 +160,26 @@ export const Auditor: React.FC<AuditorProps> = ({
         addLog("SUCCESS: Audit sequence validated successfully.");
         
         const result = JSON.parse(response.text);
-        auditFinished = true; // Mark as done to exit loop
+
+        // SURGICAL ADDITION: Persist result to Supabase if user is logged in
+        if (user) {
+          addLog("SYSTEM: Synchronizing audit trail with secure database...");
+          const { error } = await supabase
+            .from('audit_results')
+            .insert(result.map((row: any) => ({ ...row, user_id: user.id })));
+          
+          if (error) {
+            console.error("Supabase Persistence Error:", error);
+            addLog("WARNING: Database sync failed. Data held in local memory.");
+          } else {
+            addLog("SUCCESS: Transaction permanently logged to Audit Ledger.");
+          }
+        }
+
+        auditFinished = true; 
         setTimeout(() => onComplete(result), 1000);
 
       } catch (error: any) {
-        // SURGICAL ADDITION: Handle 429 Quota Error with Sleep
         const isQuotaError = error.status === 429 || error.message?.includes('429');
         
         if (isQuotaError && attempt < maxRetries) {
@@ -176,10 +192,9 @@ export const Auditor: React.FC<AuditorProps> = ({
           
           await sleep(delaySeconds * 1000);
           attempt++;
-          continue; // Re-run the loop
+          continue; 
         }
 
-        // SURGICAL REPLACEMENT: Professional Light Blue Action Messages
         if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
         console.error(error);
         const errorMsg = error instanceof Error ? error.message : "UNKNOWN_ERROR";
@@ -194,7 +209,6 @@ export const Auditor: React.FC<AuditorProps> = ({
           addLog(`INSTRUCTION: System suspended. Please retry later.`);
         }
         
-        // Reset processing state so button is clickable again
         setIsProcessing(false);
         break; 
       }
@@ -250,7 +264,7 @@ export const Auditor: React.FC<AuditorProps> = ({
               <div key={i} className="flex gap-4 group">
                 <span className={`leading-relaxed ${
                   line.includes('WARNING') || line.includes('CRITICAL') ? 'text-rose-400 font-bold' : 
-                  line.includes('INSTRUCTION') ? 'text-cyan-300 font-bold' : // Light Blue (Cyan) font
+                  line.includes('INSTRUCTION') ? 'text-cyan-300 font-bold' : 
                   line.includes('SUCCESS') ? 'text-cyan-400 font-bold' : 
                   'text-emerald-400/90'
                 }`}>

@@ -1,5 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react'; // SURGICAL ADDITION
 import { jsPDF } from 'jspdf';
+import { supabase } from '../lib/supabase'; // SURGICAL ADDITION
+import { useAuth } from '../contexts/AuthContext'; // SURGICAL ADDITION
 import { AuditEntry } from '../types';
 
 interface AuditTableProps {
@@ -7,10 +9,39 @@ interface AuditTableProps {
 }
 
 export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
+  const { user } = useAuth(); // SURGICAL ADDITION
   const [searchTerm, setSearchTerm] = useState('');
+  const [dbResults, setDbResults] = useState<AuditEntry[]>([]); // SURGICAL ADDITION
+
+  // SURGICAL ADDITION: Fetch historical ledger items on login
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from('audit_results')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (data && !error) {
+        setDbResults(data);
+      }
+    };
+    fetchHistory();
+  }, [user]);
+
+  // Merge live results with database history
+  const combinedResults = useMemo(() => {
+    const unique = new Map();
+    [...results, ...dbResults].forEach(item => {
+      // Use a composite key to prevent duplicates
+      const key = `${item.date_range}-${item.usage_value}-${item.co2e_kg}`;
+      if (!unique.has(key)) unique.set(key, item);
+    });
+    return Array.from(unique.values());
+  }, [results, dbResults]);
 
   const filteredResults = useMemo(() => {
-    return results.filter(entry => {
+    return combinedResults.filter(entry => {
       const search = searchTerm.toLowerCase();
       return (
         (entry.date_range || '').toLowerCase().includes(search) ||
@@ -19,12 +50,11 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
         (entry.doc_type || '').toLowerCase().includes(search)
       );
     });
-  }, [results, searchTerm]);
+  }, [combinedResults, searchTerm]);
 
-  // SURGICAL ADDITION: CSV Export Logic for Audit Trail
   const exportToCSV = () => {
     const headers = ["Date Range", "Category", "Doc Type", "Scope", "Usage", "Unit", "CO2e (kg)", "Confidence", "Audit Note"];
-    const rows = results.map(r => [
+    const rows = combinedResults.map(r => [
       r.date_range,
       r.category,
       r.doc_type,
@@ -54,10 +84,9 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
       const margin = 20;
       let y = margin;
 
-      // Header Branding
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(22);
-      doc.setTextColor(79, 70, 229); // Indigo-600
+      doc.setTextColor(79, 70, 229); 
       doc.text('GetCarbonProof', margin, y);
       
       doc.setFontSize(10);
@@ -80,7 +109,6 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
       doc.text(`Certificate ID: ${btoa(JSON.stringify(entry)).substring(0, 16).toUpperCase()}`, margin, y);
       doc.text(`Generated on: ${new Date().toLocaleString()}`, 210 - margin, y, { align: 'right' });
 
-      // Audit Data Section
       y += 20;
       doc.setFillColor(248, 250, 252);
       doc.roundedRect(margin, y, 170, 100, 4, 4, 'F');
@@ -110,7 +138,6 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
       doc.setTextColor(100);
       drawRow('Confidence Score:', entry.confidence_score || 'Low');
 
-      // Audit Note
       y += 110;
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(15, 23, 42);
@@ -122,7 +149,6 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
       const splitNote = doc.splitTextToSize(entry.audit_note || 'No specific citation provided for this entry.', 170);
       doc.text(splitNote, margin, y);
 
-      // Footer
       const footerY = 280;
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
@@ -137,7 +163,7 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
     }
   };
 
-  if (!results || results.length === 0) {
+  if (!combinedResults || combinedResults.length === 0) {
     return (
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-16 text-center">
         <div className="w-20 h-20 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
@@ -153,7 +179,6 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
 
   return (
     <div className="space-y-6">
-      {/* Search and Filters */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-96">
           <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
@@ -166,7 +191,6 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
           />
         </div>
         <div className="flex gap-2">
-          {/* SURGICAL ADDITION: Export Button added to the header row */}
           <button 
             onClick={exportToCSV}
             className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
@@ -215,7 +239,6 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
                   </td>
                   <td className="px-8 py-5">
                     <span className="text-slate-600 font-medium">{entry.category || 'N/A'}</span>
-                    {/* SURGICAL ADDITION: In-line Citation Note */}
                     <p className="text-[10px] text-slate-400 italic mt-1 line-clamp-1 group-hover:line-clamp-none transition-all max-w-[200px]">
                       {entry.audit_note}
                     </p>
@@ -241,7 +264,6 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
                       {(entry.co2e_kg || 0).toLocaleString()}
                     </span>
                   </td>
-                  {/* SURGICAL ADDITION: Confidence Badge Column */}
                   <td className="px-8 py-5">
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
                       entry.confidence_score === 'High' 
