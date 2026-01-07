@@ -180,14 +180,20 @@ export const Auditor: React.FC<AuditorProps> = ({
         setTimeout(() => onComplete(result), 1000);
 
       } catch (error: any) {
-        const isQuotaError = error.status === 429 || error.message?.includes('429');
+        // SURGICAL REPLACEMENT: Expanded retryable error logic (429, 503, 500)
+        const isRetryableError = 
+          error.status === 429 || error.message?.includes('429') ||
+          error.status === 503 || error.message?.includes('503') ||
+          error.status === 500 || error.message?.includes('500');
         
-        if (isQuotaError && attempt < maxRetries) {
+        if (isRetryableError && attempt < maxRetries) {
           const delayMatch = error.message?.match(/retryDelay":"(\d+)s/);
-          const delaySeconds = delayMatch ? parseInt(delayMatch[1]) : 60;
+          // Default to 15s for 503 Overload if no specific delay is provided
+          const delaySeconds = delayMatch ? parseInt(delayMatch[1]) : (error.status === 503 ? 15 : 60);
           
-          addLog(`WARNING: Node encounter: Quota Exceeded (429).`);
-          addLog(`SYSTEM: Cooling down node for ${delaySeconds}s...`);
+          const errorType = error.status === 503 ? 'Server Overloaded (503)' : 'Quota Exceeded (429)';
+          addLog(`WARNING: Node encounter: ${errorType}.`);
+          addLog(`SYSTEM: Waiting for server to stabilize (${delaySeconds}s)...`);
           addLog(`RETRY: Re-attempting extraction (${attempt}/${maxRetries})...`);
           
           await sleep(delaySeconds * 1000);
@@ -199,7 +205,7 @@ export const Auditor: React.FC<AuditorProps> = ({
         console.error(error);
         const errorMsg = error instanceof Error ? error.message : "UNKNOWN_ERROR";
 
-        if (isQuotaError && attempt >= maxRetries) {
+        if (isRetryableError && attempt >= maxRetries) {
           addLog(`CRITICAL: Audit sequence failed after ${maxRetries} attempts.`);
           addLog(`REASON: AI Node is currently busy processing high traffic.`);
           addLog(`INSTRUCTION: Please wait a few minutes and try running the report again.`); 
