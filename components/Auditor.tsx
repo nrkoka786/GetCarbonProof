@@ -122,10 +122,10 @@ export const Auditor: React.FC<AuditorProps> = ({
           }))
         );
 
-        // SURGICAL REPLACEMENT: Confidence Hardening Prompt for Consistency
+        // SURGICAL REPLACEMENT: Entity-Aware Extraction Prompt
         const prompt = `
-          ROLE: Lead Auditor for GetCarbonProof. Extract carbon data from utility bills with 100% mathematical precision.
-          TASK: Identify reporting period, category (e.g., Fuel, Electricity), usage value, and unit.
+          ROLE: Lead Auditor for GetCarbonProof. Extract carbon data AND the Legal Entity Name (e.g., FZ Prestige Digital) from the utility documents with 100% mathematical precision.
+          TASK: Identify reporting period, category (e.g., Fuel, Electricity), usage value, unit, and the Company Name printed on the bill.
           
           CONFIDENCE SCORING RULES:
           - Assign "High" if the date, usage value, and unit are clearly legible in the document.
@@ -159,8 +159,10 @@ export const Auditor: React.FC<AuditorProps> = ({
                   co2e_kg: { type: Type.NUMBER },
                   confidence_score: { type: Type.STRING },
                   audit_note: { type: Type.STRING },
+                  // SURGICAL ADDITION: Capturing extracted Company Name
+                  company_name: { type: Type.STRING }
                 },
-                required: ["date_range", "category", "usage_value", "usage_unit", "co2e_kg", "confidence_score", "audit_note", "doc_type", "scope"]
+                required: ["date_range", "category", "usage_value", "usage_unit", "co2e_kg", "confidence_score", "audit_note", "doc_type", "scope", "company_name"]
               }
             }
           }
