@@ -121,10 +121,19 @@ export const Auditor: React.FC<AuditorProps> = ({
           }))
         );
 
+        // SURGICAL REPLACEMENT: Confidence Hardening Prompt for Consistency
         const prompt = `
-          ROLE: Lead Auditor for GetCarbonProof. Extract carbon data from utility bills.
-          Return a strict JSON array of AuditEntry objects.
+          ROLE: Lead Auditor for GetCarbonProof. Extract carbon data from utility bills with 100% mathematical precision.
+          TASK: Identify reporting period, category (e.g., Fuel, Electricity), usage value, and unit.
+          
+          CONFIDENCE SCORING RULES:
+          - Assign "High" if the date, usage value, and unit are clearly legible in the document.
+          - Use "Medium" ONLY if the text is blurry, occluded, or if the value must be inferred via calculation.
+          - Never downgrade confidence based on general model caution; if the number is there, it is High Confidence.
+          - Prioritize High Confidence for standard industrial utility sources.
+
           Required Factor for Electricity: 0.233.
+          Return a strict JSON array of AuditEntry objects.
         `;
 
         const response = await ai.models.generateContent({
@@ -161,7 +170,6 @@ export const Auditor: React.FC<AuditorProps> = ({
         
         const result = JSON.parse(response.text);
 
-        // SURGICAL ADDITION: Persist result to Supabase if user is logged in
         if (user) {
           addLog("SYSTEM: Synchronizing audit trail with secure database...");
           const { error } = await supabase
@@ -180,7 +188,6 @@ export const Auditor: React.FC<AuditorProps> = ({
         setTimeout(() => onComplete(result), 1000);
 
       } catch (error: any) {
-        // SURGICAL REPLACEMENT: Expanded retryable error logic (429, 503, 500)
         const isRetryableError = 
           error.status === 429 || error.message?.includes('429') ||
           error.status === 503 || error.message?.includes('503') ||
@@ -188,7 +195,6 @@ export const Auditor: React.FC<AuditorProps> = ({
         
         if (isRetryableError && attempt < maxRetries) {
           const delayMatch = error.message?.match(/retryDelay":"(\d+)s/);
-          // Default to 15s for 503 Overload if no specific delay is provided
           const delaySeconds = delayMatch ? parseInt(delayMatch[1]) : (error.status === 503 ? 15 : 60);
           
           const errorType = error.status === 503 ? 'Server Overloaded (503)' : 'Quota Exceeded (429)';
