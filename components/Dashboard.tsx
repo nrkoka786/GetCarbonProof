@@ -197,6 +197,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </div>
       )}
 
+      {/* DASHBOARD HEADER: "Export Charts" definitively removed | Client Branding reinforced */}
       <div className="flex justify-between items-end border-b border-slate-100 pb-6 mb-6">
         <div>
           <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">Executive Audit Summary</span>
