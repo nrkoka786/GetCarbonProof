@@ -212,6 +212,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
               <i className="fas fa-sign-in-alt"></i> Sign in to Save
             </button>
           )}
+          {/* Removed: Export Charts button for professional immutable audit standards */}
           {results.length > 0 && user && (
             <button 
               onClick={downloadSummaryPDF}
@@ -384,7 +385,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </h4>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          {/* SURGICAL REPLACEMENT: Dynamic Narrative Insight Column */}
+          {/* Narrative Insight Column */}
           <div className="space-y-6 text-sm leading-relaxed text-slate-600">
             <p>
               <strong className="text-slate-900 underline underline-offset-4 decoration-indigo-200">Inventory Distribution:</strong> {summary.narrativeInsight}
