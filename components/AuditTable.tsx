@@ -59,19 +59,34 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
     });
   }, [combinedResults, searchTerm]);
 
-  // SURGICAL REPLACEMENT: Professional Multi-Page PDF Export Engine
+  // SURGICAL REPLACEMENT: High-Fidelity Multi-Page PDF Export Engine
   const downloadDetailedPDF = async () => {
     const element = document.getElementById('detailed-ledger-table');
     if (!element) return;
 
     try {
-      // SURGICAL ADDITION: Scale 3 and scrollHeight capture for all 36 entries
+      // SURGICAL ADDITION: Scale 4 and Style Overrides to stop text chopping
       const canvas = await html2canvas(element, { 
-        scale: 3, 
+        scale: 4, 
         useCORS: true, 
         backgroundColor: "#ffffff",
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight 
+        windowWidth: 1600, // Provides horizontal room for long filenames
+        windowHeight: element.scrollHeight, // Captures every single row
+        onclone: (clonedDoc) => {
+          const table = clonedDoc.getElementById('detailed-ledger-table');
+          if (table) {
+            // Force expand all cells to prevent CSS clipping/truncation
+            const cells = table.querySelectorAll('span, td, p, div');
+            cells.forEach(cell => {
+              const el = cell as HTMLElement;
+              el.style.whiteSpace = 'normal'; 
+              el.style.overflow = 'visible';
+              el.style.textOverflow = 'clip';
+              el.style.maxWidth = 'none';
+              el.style.wordBreak = 'break-word';
+            });
+          }
+        }
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -84,9 +99,9 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
       const imgHeight = (imgProps.height * pageWidth) / imgProps.width;
 
       let heightLeft = imgHeight;
-      let position = 45; // Fixed header buffer for FZ Prestige Digital branding
+      let position = 45; // Branding buffer
 
-      // Professional Audit Header (Page 1)
+      // Header Branding (Page 1)
       doc.setFontSize(18);
       doc.setTextColor(15, 23, 42);
       doc.text(`${clientName.toUpperCase()} - DETAILED LEDGER`, 20, 20);
@@ -96,7 +111,7 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
       doc.text(`Authenticated Audit Trail: ${filteredResults.length} Verified Entries`, 20, 28);
       doc.text(`Export Date: ${new Date().toLocaleString()}`, 20, 34);
 
-      // Multi-page Rendering Loop: Captures full ledger length
+      // Multi-page Rendering Loop
       doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight, undefined, 'FAST');
       heightLeft -= (pageHeight - position);
 
@@ -327,7 +342,6 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
                     {entry.usage_unit || '-'}
                   </td>
                   <td className="px-8 py-5">
-                    {/* SURGICAL FIX: whitespace-nowrap maintained for single-line display */}
                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border whitespace-nowrap min-w-[85px] inline-flex justify-center ${
                       entry.scope?.toLowerCase().includes('1') ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
                       entry.scope?.toLowerCase().includes('2') ? 'bg-indigo-600 text-white border-indigo-700' :
