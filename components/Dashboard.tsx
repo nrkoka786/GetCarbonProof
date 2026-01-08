@@ -242,55 +242,63 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </div>
       )}
 
+      {/* Metric Cards: Updated with 'pb-10' and 'min-h-[160px]' for PDF safety */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300">
+        <div className="bg-white p-6 pb-10 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 min-h-[160px] flex flex-col justify-between">
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
               <i className="fas fa-leaf text-xl"></i>
             </div>
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Footprint</span>
           </div>
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-4xl font-black text-slate-900">
-              {(summary.total / 1000).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </h3>
-            <span className="text-slate-500 font-medium">tonnes CO2e</span>
-          </div>
-          <div className="mt-2 text-xs text-slate-400 font-bold uppercase tracking-tighter">
-            {summary.total.toLocaleString()} kg Verified aggregate
+          <div>
+            <div className="flex items-baseline gap-2">
+              <h3 className="text-4xl font-black text-slate-900">
+                {(summary.total / 1000).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </h3>
+              <span className="text-slate-500 font-medium">tonnes CO2e</span>
+            </div>
+            <div className="mt-2 text-xs text-slate-400 font-bold uppercase tracking-tighter">
+              {summary.total.toLocaleString()} kg Verified aggregate
+            </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300">
+        {/* SURGICAL FIX: Added 'pb-10' and 'flex-col justify-between' to prevent text clipping */}
+        <div className="bg-white p-6 pb-10 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 min-h-[160px] flex flex-col justify-between">
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
               <i className="fas fa-file-contract text-xl"></i>
             </div>
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Documents Audited</span>
           </div>
-          <h3 className="text-4xl font-black text-slate-900">{summary.docCount}</h3>
-          <p className="text-slate-500 text-xs mt-2 truncate font-bold uppercase tracking-tight">
-            {summary.docSources.length > 0 ? summary.docSources.join(' • ') : 'No Evidence Processed'}
-          </p>
+          <div>
+            <h3 className="text-4xl font-black text-slate-900">{summary.docCount}</h3>
+            <p className="text-slate-500 text-[10px] mt-2 font-bold uppercase tracking-tight leading-normal">
+              {summary.docSources.length > 0 ? summary.docSources.join(' • ') : 'No Evidence Processed'}
+            </p>
+          </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300">
+        <div className="bg-white p-6 pb-10 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 min-h-[160px] flex flex-col justify-between">
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
               <i className="fas fa-award text-xl"></i>
             </div>
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Audit Confidence</span>
           </div>
-          <h3 className={`text-4xl font-black ${
-            summary.overallConfidence === 'High' ? 'text-emerald-600' : 
-            summary.overallConfidence === 'Medium' ? 'text-amber-500' : 
-            summary.overallConfidence === 'Pending' ? 'text-slate-300' : 'text-rose-500'
-          }`}>
-            {summary.overallConfidence}
-          </h3>
-          <p className="text-slate-500 text-xs mt-2 font-medium">
-            AI validation rating
-          </p>
+          <div>
+            <h3 className={`text-4xl font-black ${
+              summary.overallConfidence === 'High' ? 'text-emerald-600' : 
+              summary.overallConfidence === 'Medium' ? 'text-amber-500' : 
+              summary.overallConfidence === 'Pending' ? 'text-slate-300' : 'text-rose-500'
+            }`}>
+              {summary.overallConfidence}
+            </h3>
+            <p className="text-slate-500 text-xs mt-2 font-medium">
+              AI validation rating
+            </p>
+          </div>
         </div>
       </div>
 
