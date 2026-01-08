@@ -104,7 +104,8 @@ export const Auditor: React.FC<AuditorProps> = ({
       }
     }, 1500);
 
-    const maxRetries = 5;
+    // SURGICAL ADDITION: Increased retries to survive peak traffic periods
+    const maxRetries = 8; 
     let attempt = 1;
     let auditFinished = false;
 
