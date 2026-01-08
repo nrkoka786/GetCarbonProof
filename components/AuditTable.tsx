@@ -250,7 +250,8 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
                     {entry.usage_unit || '-'}
                   </td>
                   <td className="px-8 py-5">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                    {/* SURGICAL FIX: whitespace-nowrap added to prevent Scope text wrapping */}
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border whitespace-nowrap min-w-[85px] inline-flex justify-center ${
                       entry.scope?.toLowerCase().includes('1') ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
                       entry.scope?.toLowerCase().includes('2') ? 'bg-indigo-600 text-white border-indigo-700' :
                       entry.scope?.toLowerCase().includes('3') ? 'bg-pink-50 text-pink-700 border-pink-100' :
