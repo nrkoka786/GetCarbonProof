@@ -115,14 +115,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
     if (!element) return;
 
     try {
+      // SURGICAL ADJUSTMENT: Ultra-sharp scale and padding buffer to prevent character chopping
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 3, 
         useCORS: true,
         backgroundColor: "#ffffff",
         logging: false,
-        // SURGICAL ADDITION: Capture the full height of the scrollable element
         windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight
+        windowHeight: element.scrollHeight,
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.getElementById('audit-dashboard-view');
+          if (clonedElement) {
+            clonedElement.style.padding = '20px'; // Breathing room for cards
+          }
+        }
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -153,14 +159,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       doc.text('EXECUTIVE AUDIT SUMMARY', 20, 38);
 
       // Render the first page image slice
-      doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight);
+      doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight, undefined, 'FAST');
       heightLeft -= (pageHeight - position);
 
       // SURGICAL ADDITION: Loop to add subsequent pages if content exceeds A4 height
       while (heightLeft > 0) {
         doc.addPage();
         position = heightLeft - imgHeight; // Shift image up to start next slice
-        doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight);
+        doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight, undefined, 'FAST');
         heightLeft -= pageHeight;
       }
       
