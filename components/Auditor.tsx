@@ -179,9 +179,20 @@ export const Auditor: React.FC<AuditorProps> = ({
 
         if (user) {
           addLog("SYSTEM: Synchronizing audit trail with secure database...");
+          
+          // SURGICAL ADDITION: Data Sanitization Layer to prevent Database Sync Failure
+          const sanitizedPayload = result.map((row: any) => ({
+            ...row,
+            user_id: user.id,
+            // Ensure doc_type (filename) and audit_note fit within standard DB constraints
+            doc_type: (row.doc_type || '').substring(0, 500), 
+            audit_note: (row.audit_note || '').substring(0, 2000),
+            company_name: (row.company_name || 'FZ Prestige Digital').substring(0, 255)
+          }));
+
           const { error } = await supabase
             .from('audit_results')
-            .insert(result.map((row: any) => ({ ...row, user_id: user.id })));
+            .insert(sanitizedPayload);
           
           if (error) {
             console.error("Supabase Persistence Error:", error);
