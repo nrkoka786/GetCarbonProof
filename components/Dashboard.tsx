@@ -119,15 +119,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         scale: 2,
         useCORS: true,
         backgroundColor: "#ffffff",
-        logging: false
+        logging: false,
+        // SURGICAL ADDITION: Capture the full height of the scrollable element
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight
       });
 
       const imgData = canvas.toDataURL('image/png');
       const doc = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = doc.internal.pageSize.getWidth();
+      
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      
       const imgProps = doc.getImageProperties(imgData);
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      const imgHeight = (imgProps.height * pageWidth) / imgProps.width;
 
+      // SURGICAL ADDITION: Multi-page Splitting Engine
+      let heightLeft = imgHeight;
+      let position = 45; // Start position after the custom header on page 1
+
+      // Initial Header Branding (Page 1)
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(100, 116, 139); 
@@ -141,13 +152,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       doc.setTextColor(79, 70, 229);
       doc.text('EXECUTIVE AUDIT SUMMARY', 20, 38);
 
-      doc.addImage(imgData, 'PNG', 0, 45, pdfWidth, pdfHeight);
+      // Render the first page image slice
+      doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight);
+      heightLeft -= (pageHeight - position);
+
+      // SURGICAL ADDITION: Loop to add subsequent pages if content exceeds A4 height
+      while (heightLeft > 0) {
+        doc.addPage();
+        position = heightLeft - imgHeight; // Shift image up to start next slice
+        doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
       
-      const footerY = 45 + pdfHeight + 10;
+      // Dynamic Footer on the final page
+      const finalPageHeight = doc.internal.pageSize.getHeight();
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Authenticated Auditor: ${user.email}`, 20, footerY);
-      doc.text(`Verification Timestamp: ${new Date().toLocaleString()}`, 20, footerY + 7);
+      doc.text(`Authenticated Auditor: ${user.email}`, 20, finalPageHeight - 15);
+      doc.text(`Verification Timestamp: ${new Date().toLocaleString()}`, 20, finalPageHeight - 8);
       
       doc.save(`${clientName.replace(/\s+/g, '_')}_Carbon_Audit.pdf`);
     } catch (e) {
