@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react'; // SURGICAL ADDITION
 import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas'; // SURGICAL ADDITION for Detailed PDF
 import { supabase } from '../lib/supabase'; // SURGICAL ADDITION
 import { useAuth } from '../contexts/AuthContext'; // SURGICAL ADDITION
 import { AuditEntry } from '../types';
@@ -12,6 +13,12 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
   const { user } = useAuth(); // SURGICAL ADDITION
   const [searchTerm, setSearchTerm] = useState('');
   const [dbResults, setDbResults] = useState<AuditEntry[]>([]); // SURGICAL ADDITION
+
+  // SURGICAL ADDITION: Robust Company Name Extraction
+  const clientName = useMemo(() => {
+    const found = [...results, ...dbResults].find(r => r.company_name && r.company_name.trim() !== '')?.company_name;
+    return found || "FZ Prestige Digital";
+  }, [results, dbResults]);
 
   // SURGICAL ADDITION: Fetch historical ledger items on login
   useEffect(() => {
@@ -51,6 +58,35 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
       );
     });
   }, [combinedResults, searchTerm]);
+
+  // SURGICAL ADDITION: Professional PDF Export for the Ledger
+  const downloadDetailedPDF = async () => {
+    const element = document.getElementById('detailed-ledger-table');
+    if (!element) return;
+
+    try {
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+      const imgData = canvas.toDataURL('image/png');
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const imgProps = doc.getImageProperties(imgData);
+      const imgHeight = (imgProps.height * pageWidth) / imgProps.width;
+
+      doc.setFontSize(18);
+      doc.setTextColor(15, 23, 42);
+      doc.text(`${clientName.toUpperCase()} - DETAILED LEDGER`, 20, 20);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Authenticated Audit Trail: ${filteredResults.length} Verified Entries`, 20, 28);
+      doc.text(`Export Date: ${new Date().toLocaleString()}`, 20, 34);
+
+      doc.addImage(imgData, 'PNG', 0, 45, pageWidth, imgHeight);
+      doc.save(`${clientName.replace(/\s+/g, '_')}_Detailed_Ledger.pdf`);
+    } catch (e) {
+      console.error("Ledger PDF generation failed", e);
+    }
+  };
 
   const exportToCSV = () => {
     const headers = ["Date Range", "Category", "Doc Type", "Scope", "Usage", "Unit", "CO2e (kg)", "Confidence", "Audit Note"];
@@ -179,33 +215,49 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full md:w-96">
-          <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-          <input 
-            type="text"
-            placeholder="Search by Date, Scope, or Category..."
-            className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all text-sm font-medium"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      {/* HEADER SECTION: Surgically updated with FZ Prestige Digital branding */}
+      <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-6 items-center justify-between">
+        <div>
+          <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Lead Auditor Node 3.0</span>
+          <h2 className="text-2xl font-black text-slate-900 mt-1">{clientName}</h2>
         </div>
-        <div className="flex gap-2">
-          <button 
-            onClick={exportToCSV}
-            className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
-          >
-            <i className="fas fa-file-csv text-emerald-600"></i>
-            Export Audit Trail
-          </button>
-          <span className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-indigo-100 flex items-center gap-2">
-            <i className="fas fa-shield-halved"></i>
-            {filteredResults.length} Verified Entries
-          </span>
+        <div className="flex flex-col md:flex-row gap-4 items-center w-full md:w-auto">
+          <div className="relative w-full md:w-80">
+            <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+            <input 
+              type="text"
+              placeholder="Search Ledger..."
+              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all text-sm font-medium"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2 w-full md:w-auto">
+            {/* Download Ledger PDF: New Surgical Addition */}
+            <button 
+              onClick={downloadDetailedPDF}
+              className="bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg flex items-center gap-2"
+            >
+              <i className="fas fa-file-pdf"></i>
+              Download PDF
+            </button>
+            {/* Export Audit Trail: Retained as per user request */}
+            <button 
+              onClick={exportToCSV}
+              className="bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
+            >
+              <i className="fas fa-file-csv text-emerald-600"></i>
+              CSV Export
+            </button>
+            <span className="bg-indigo-50 text-indigo-700 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-indigo-100 flex items-center gap-2 whitespace-nowrap">
+              <i className="fas fa-shield-halved"></i>
+              {filteredResults.length} Entries
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
+      <div id="detailed-ledger-table" className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead className="bg-slate-50/50 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] border-b border-slate-100">
@@ -229,7 +281,7 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900 whitespace-nowrap">
+                      <span className="font-bold text-slate-900 whitespace-nowrap text-xs max-w-[200px] truncate">
                         {entry.doc_type || 'Unknown Source'}
                       </span>
                       <div className="text-emerald-500 bg-emerald-50 w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-sm border border-emerald-100" title="99.9% Extraction Accuracy">
@@ -238,19 +290,19 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
                     </div>
                   </td>
                   <td className="px-8 py-5">
-                    <span className="text-slate-600 font-medium">{entry.category || 'N/A'}</span>
+                    <span className="text-slate-600 font-medium text-sm">{entry.category || 'N/A'}</span>
                     <p className="text-[10px] text-slate-400 italic mt-1 line-clamp-1 group-hover:line-clamp-none transition-all max-w-[200px]">
                       {entry.audit_note}
                     </p>
                   </td>
-                  <td className="px-8 py-5 font-bold text-slate-900">
+                  <td className="px-8 py-5 font-bold text-slate-900 tabular-nums text-sm">
                     {(entry.usage_value || 0).toLocaleString()}
                   </td>
                   <td className="px-8 py-5 text-slate-400 font-black uppercase text-[10px] tracking-widest">
                     {entry.usage_unit || '-'}
                   </td>
                   <td className="px-8 py-5">
-                    {/* SURGICAL FIX: whitespace-nowrap added to prevent Scope text wrapping */}
+                    {/* SURGICAL FIX: whitespace-nowrap maintained for single-line display */}
                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border whitespace-nowrap min-w-[85px] inline-flex justify-center ${
                       entry.scope?.toLowerCase().includes('1') ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
                       entry.scope?.toLowerCase().includes('2') ? 'bg-indigo-600 text-white border-indigo-700' :
@@ -260,7 +312,7 @@ export const AuditTable: React.FC<AuditTableProps> = ({ results = [] }) => {
                       {entry.scope || 'Uncategorized'}
                     </span>
                   </td>
-                  <td className="px-8 py-5">
+                  <td className="px-8 py-5 text-sm">
                     <span className="font-black text-indigo-600 tabular-nums">
                       {(entry.co2e_kg || 0).toLocaleString()}
                     </span>
