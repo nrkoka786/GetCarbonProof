@@ -261,7 +261,16 @@ const MainApp: React.FC = () => {
               )}
             </div>
 
-            {/* SURGICAL DELETION: The "Export Charts" button has been removed to ensure professional audit integrity */}
+            {/* NEW: Visual Export Button (Visible when logged in and results exist) */}
+            {user && auditResults.length > 0 && activeTab === 'dashboard' && (
+              <button 
+                onClick={handleProfessionalExport}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-emerald-100 flex items-center gap-3 active:scale-95"
+              >
+                <i className="fas fa-file-pdf"></i>
+                Export Charts
+              </button>
+            )}
 
             {user ? (
               <button 
