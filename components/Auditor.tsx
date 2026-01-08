@@ -122,11 +122,15 @@ export const Auditor: React.FC<AuditorProps> = ({
           }))
         );
 
-        // SURGICAL REPLACEMENT: Entity-Aware Extraction Prompt
+        // SURGICAL REPLACEMENT: Entity-Aware and Filename-Sensitive Extraction Prompt
         const prompt = `
           ROLE: Lead Auditor for GetCarbonProof. Extract carbon data AND the Legal Entity Name (e.g., FZ Prestige Digital) from the utility documents with 100% mathematical precision.
           TASK: Identify reporting period, category (e.g., Fuel, Electricity), usage value, unit, and the Company Name printed on the bill.
           
+          DOCUMENT SOURCE RULE:
+          - For the 'doc_type' field, use the EXACT filename(s) provided in the context: ${files.map(f => f.name).join(', ')}.
+          - This ensures 1:1 traceability between the ledger entry and the source evidence.
+
           CONFIDENCE SCORING RULES:
           - Assign "High" if the date, usage value, and unit are clearly legible in the document.
           - Use "Medium" ONLY if the text is blurry, occluded, or if the value must be inferred via calculation.
