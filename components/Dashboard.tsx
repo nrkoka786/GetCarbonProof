@@ -115,9 +115,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
     if (!element) return;
 
     try {
-      // SURGICAL ADJUSTMENT: Refined scale and clone cleaning with micro-scaled typography
+      // SURGICAL ADJUSTMENT: Lowering capture scale to 1.8 for balanced chart text
       const canvas = await html2canvas(element, {
-        scale: 2.2, 
+        scale: 1.8, 
         useCORS: true,
         backgroundColor: "#ffffff",
         logging: false,
@@ -138,6 +138,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
             (reportHeader as HTMLElement).style.display = 'none';
           }
 
+          // SURGICAL ADDITION: Programmatic Chart Typography Scaling
+          const chartTexts = clonedDoc.querySelectorAll('.recharts-text, .recharts-legend-item-text, .recharts-label');
+          chartTexts.forEach(text => {
+            const el = text as HTMLElement;
+            el.style.fontSize = '6px'; // Force micro-scale for axes and legends
+            el.style.fontWeight = '400';
+            el.style.fill = '#64748b';
+          });
+
           const clonedElement = clonedDoc.getElementById('audit-dashboard-view');
           if (clonedElement) {
             clonedElement.style.padding = '10px'; 
@@ -154,7 +163,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       const imgProps = doc.getImageProperties(imgData);
       const imgHeight = (imgProps.height * pageWidth) / imgProps.width;
 
-      // SURGICAL REPLACEMENT: Professional Micro-scaled typography (Final 50% Reduction)
+      // SURGICAL REPLACEMENT: Micro-scaled typography (Final 50% Reduction)
       let heightLeft = imgHeight;
       let position = 22; // Tightened start position to match smaller header
 
