@@ -115,9 +115,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
     if (!element) return;
 
     try {
-      // SURGICAL ADJUSTMENT: Refined scale and clone cleaning with micro-scaled typography
+      // SURGICAL ADJUSTMENT: Refined scale and clone cleaning with micro-scaled typography (50% reduction)
       const canvas = await html2canvas(element, {
-        scale: 2.2, // Refined scale for smoother micro-font rendering
+        scale: 2.2, 
         useCORS: true,
         backgroundColor: "#ffffff",
         logging: false,
@@ -140,7 +140,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
 
           const clonedElement = clonedDoc.getElementById('audit-dashboard-view');
           if (clonedElement) {
-            clonedElement.style.padding = '12px'; // Tighter professional padding
+            clonedElement.style.padding = '10px'; // Tight professional padding
           }
         }
       });
@@ -154,22 +154,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       const imgProps = doc.getImageProperties(imgData);
       const imgHeight = (imgProps.height * pageWidth) / imgProps.width;
 
-      // SURGICAL REPLACEMENT: Micro-scaled header typography for elite corporate branding
+      // SURGICAL REPLACEMENT: Micro-scaled typography (50% size reduction)
       let heightLeft = imgHeight;
-      let position = 30; // Further tightened start position
+      let position = 25; // Optimized tighter start position for content
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(6); // Reduced to 6pt for a subtle metadata label
+      doc.setFontSize(5); // Micro-scaled metadata label
       doc.setTextColor(148, 163, 184); 
-      doc.text('AUTHENTICATED BY GETCARBONPROOF', 20, 10);
+      doc.text('AUTHENTICATED BY GETCARBONPROOF', 20, 8);
       
-      doc.setFontSize(11); // Reduced to 11pt for a clean, non-overpowering title
+      doc.setFontSize(9); // Refined title size
       doc.setTextColor(15, 23, 42);
-      doc.text(clientName.toUpperCase(), 20, 17);
+      doc.text(clientName.toUpperCase(), 20, 14);
       
-      doc.setFontSize(7.5); // Reduced to 7.5pt for balanced sub-branding
+      doc.setFontSize(6); // Balanced sub-branding
       doc.setTextColor(79, 70, 229);
-      doc.text('EXECUTIVE AUDIT SUMMARY', 20, 22);
+      doc.text('EXECUTIVE AUDIT SUMMARY', 20, 18);
 
       // Render the first page image slice
       doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight, undefined, 'FAST');
@@ -185,10 +185,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       
       // SURGICAL REPLACEMENT: Micro-scaled footer typography
       const finalPageHeight = doc.internal.pageSize.getHeight();
-      doc.setFontSize(7); // Reduced to 7pt
+      doc.setFontSize(6); // Micro-scaled footer
       doc.setFont('helvetica', 'normal');
-      doc.text(`Authenticated Auditor: ${user.email}`, 20, finalPageHeight - 10);
-      doc.text(`Verification Timestamp: ${new Date().toLocaleString()}`, 20, finalPageHeight - 6);
+      doc.text(`Authenticated Auditor: ${user.email}`, 20, finalPageHeight - 8);
+      doc.text(`Verification Timestamp: ${new Date().toLocaleString()}`, 20, finalPageHeight - 4);
       
       doc.save(`${clientName.replace(/\s+/g, '_')}_Carbon_Audit.pdf`);
     } catch (e) {
