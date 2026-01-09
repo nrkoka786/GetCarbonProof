@@ -154,22 +154,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       const imgProps = doc.getImageProperties(imgData);
       const imgHeight = (imgProps.height * pageWidth) / imgProps.width;
 
-      // SURGICAL REPLACEMENT: Optimized branding header with professional font sizes
+      // SURGICAL REPLACEMENT: Scaled-down header typography for professional balance
       let heightLeft = imgHeight;
-      let position = 40; // Adjusted start position
+      let position = 35; // Tighter start position for the body content
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8); // Reduced professional label size
+      doc.setFontSize(7); // Reduced from 8
       doc.setTextColor(148, 163, 184); 
-      doc.text('AUTHENTICATED BY GETCARBONPROOF', 20, 15);
+      doc.text('AUTHENTICATED BY GETCARBONPROOF', 20, 12);
       
-      doc.setFontSize(18); // Professional header size (reduced from 22)
+      doc.setFontSize(14); // Reduced from 18
       doc.setTextColor(15, 23, 42);
-      doc.text(clientName.toUpperCase(), 20, 25);
+      doc.text(clientName.toUpperCase(), 20, 20);
       
-      doc.setFontSize(11); // Balanced sub-header size (reduced from 14)
+      doc.setFontSize(9); // Reduced from 11
       doc.setTextColor(79, 70, 229);
-      doc.text('EXECUTIVE AUDIT SUMMARY', 20, 32);
+      doc.text('EXECUTIVE AUDIT SUMMARY', 20, 26);
 
       // Render the first page image slice
       doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight, undefined, 'FAST');
@@ -185,10 +185,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       
       // Dynamic Footer on the final page
       const finalPageHeight = doc.internal.pageSize.getHeight();
-      doc.setFontSize(9);
+      doc.setFontSize(8); // Reduced from 9
       doc.setFont('helvetica', 'normal');
-      doc.text(`Authenticated Auditor: ${user.email}`, 20, finalPageHeight - 15);
-      doc.text(`Verification Timestamp: ${new Date().toLocaleString()}`, 20, finalPageHeight - 8);
+      doc.text(`Authenticated Auditor: ${user.email}`, 20, finalPageHeight - 12);
+      doc.text(`Verification Timestamp: ${new Date().toLocaleString()}`, 20, finalPageHeight - 7);
       
       doc.save(`${clientName.replace(/\s+/g, '_')}_Carbon_Audit.pdf`);
     } catch (e) {
