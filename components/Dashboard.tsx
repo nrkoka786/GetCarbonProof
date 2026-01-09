@@ -115,35 +115,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
     if (!element) return;
 
     try {
-      // SURGICAL ADJUSTMENT: Ultra-sharp scale and padding buffer to prevent character chopping
+      // SURGICAL ADJUSTMENT: Refined scale and clone cleaning to prevent double branding and oversized text
       const canvas = await html2canvas(element, {
-        scale: 3, 
+        scale: 2.5, // Reduced from 3 to balance text size and clarity
         useCORS: true,
         backgroundColor: "#ffffff",
         logging: false,
         windowWidth: element.scrollWidth,
         windowHeight: element.scrollHeight,
         onclone: (clonedDoc) => {
-          // SURGICAL ADDITION: Clean up UI elements for professional PDF export
+          // SURGICAL REMOVAL: Clean the canvas to prevent double-branding
           
-          // 1. Definitively hide the 'Download Signed PDF' button from the report
+          // 1. Definitively hide ALL buttons (including Download Signed PDF) from the report
           const actionButtons = clonedDoc.querySelectorAll('button');
           actionButtons.forEach(btn => {
-            if (btn.innerText.includes('Download') || btn.innerText.includes('Sign in')) {
-              (btn as HTMLElement).style.display = 'none';
-            }
+            (btn as HTMLElement).style.display = 'none';
           });
 
-          // 2. Hide redundant header text to prevent double-branding
+          // 2. Hide the existing HTML header entirely from the capture clone
           const reportHeader = clonedDoc.querySelector('.flex.justify-between.items-end.border-b');
           if (reportHeader) {
-            const innerHeaderText = reportHeader.querySelector('div:first-child');
-            if (innerHeaderText) (innerHeaderText as HTMLElement).style.visibility = 'hidden';
+            (reportHeader as HTMLElement).style.display = 'none';
           }
 
           const clonedElement = clonedDoc.getElementById('audit-dashboard-view');
           if (clonedElement) {
-            clonedElement.style.padding = '20px'; // Breathing room for cards
+            clonedElement.style.padding = '15px'; // Refined padding
           }
         }
       });
@@ -157,23 +154,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       const imgProps = doc.getImageProperties(imgData);
       const imgHeight = (imgProps.height * pageWidth) / imgProps.width;
 
-      // SURGICAL ADDITION: Multi-page Splitting Engine
+      // SURGICAL REPLACEMENT: Optimized branding header with professional font sizes
       let heightLeft = imgHeight;
-      let position = 45; // Start position after the custom header on page 1
+      let position = 40; // Adjusted start position
 
-      // Initial Header Branding (Page 1)
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
-      doc.setTextColor(100, 116, 139); 
+      doc.setFontSize(8); // Reduced professional label size
+      doc.setTextColor(148, 163, 184); 
       doc.text('AUTHENTICATED BY GETCARBONPROOF', 20, 15);
       
-      doc.setFontSize(22);
+      doc.setFontSize(18); // Professional header size (reduced from 22)
       doc.setTextColor(15, 23, 42);
-      doc.text(clientName.toUpperCase(), 20, 28);
+      doc.text(clientName.toUpperCase(), 20, 25);
       
-      doc.setFontSize(14);
+      doc.setFontSize(11); // Balanced sub-header size (reduced from 14)
       doc.setTextColor(79, 70, 229);
-      doc.text('EXECUTIVE AUDIT SUMMARY', 20, 38);
+      doc.text('EXECUTIVE AUDIT SUMMARY', 20, 32);
 
       // Render the first page image slice
       doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight, undefined, 'FAST');
@@ -189,7 +185,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       
       // Dynamic Footer on the final page
       const finalPageHeight = doc.internal.pageSize.getHeight();
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       doc.text(`Authenticated Auditor: ${user.email}`, 20, finalPageHeight - 15);
       doc.text(`Verification Timestamp: ${new Date().toLocaleString()}`, 20, finalPageHeight - 8);
