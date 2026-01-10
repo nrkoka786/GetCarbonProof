@@ -147,30 +147,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
               }
             });
 
-            // SURGICAL RESTORATION: Explicitly force visibility for unique extraction page references
-            const auditLedgerRows = clonedDoc.querySelectorAll('.border-b.border-slate-200');
-            auditLedgerRows.forEach(row => {
-               // Restore visibility of unique per-row page markers
-               const subtitles = row.querySelectorAll('.text-\\[10px\\].text-slate-400.italic');
-               subtitles.forEach(sub => {
-                  const subEl = sub as HTMLElement;
-                  subEl.style.display = 'block';
-                  subEl.style.visibility = 'visible';
-                  subEl.style.color = '#94a3b8';
+            // SURGICAL RESTORATION: Definitively targeting unique per-row page markers for screen and PDF visibility
+            const rows = clonedDoc.querySelectorAll('.border-b.border-slate-200');
+            rows.forEach(row => {
+               // 1. Resolve unique Descriptions/Page Numbers (fixes "N/A" issue)
+               const pageRefs = row.querySelectorAll('div.text-\\[10px\\].text-slate-400.italic');
+               pageRefs.forEach(ref => {
+                  const refEl = ref as HTMLElement;
+                  refEl.style.display = 'block';
+                  refEl.style.visibility = 'visible';
+                  refEl.style.opacity = '1'; // Force opacity to prevent "ghosting"
+                  refEl.style.color = '#94a3b8';
                });
 
-               // SURGICAL ADDITION: Expanded Column Width Fix for Usage and Unit
+               // 2. Definitive Column Width Fix for Usage, Unit, CO2E, and Confidence
                const cells = row.querySelectorAll('div');
                cells.forEach(cell => {
                  const cellEl = cell as HTMLElement;
-                 const text = cellEl.innerText.toUpperCase();
-                 // Apply significantly wider min-widths specifically for Usage and Unit to match historical precision
-                 if (text.includes('USAGE') || text.includes('UNIT') || text.includes('CO2E') || text.includes('CONFIDENCE')) {
-                   cellEl.style.minWidth = '180px'; 
-                   cellEl.style.width = '180px';
+                 const cellText = cellEl.innerText.toUpperCase();
+                 // Widening specifically to prevent 2-row wrapping
+                 if (cellText.includes('USAGE') || cellText.includes('UNIT') || cellText.includes('CO2E') || cellText.includes('CONFIDENCE')) {
+                   cellEl.style.minWidth = '200px'; 
+                   cellEl.style.width = '200px';
                    cellEl.style.whiteSpace = 'nowrap';
                    cellEl.style.display = 'flex';
                    cellEl.style.alignItems = 'center';
+                   cellEl.style.paddingRight = '10px';
                  }
                });
             });
