@@ -147,32 +147,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
               }
             });
 
-            // SURGICAL RESTORATION: Preserving Unique per-row Description details
+            // SURGICAL RESTORATION: Force unique Description markers (e.g., "on page 11") to be visible
             const auditLedgerRows = clonedDoc.querySelectorAll('.border-b.border-slate-200');
             auditLedgerRows.forEach(row => {
-               // Force visibility for the unique page reference italic text (e.g., "on page 11")
-               const subtitles = row.querySelectorAll('.text-\\[10px\\].text-slate-400.italic');
-               subtitles.forEach(sub => {
-                  const subEl = sub as HTMLElement;
-                  subEl.style.display = 'block';
-                  subEl.style.visibility = 'visible';
-                  subEl.style.opacity = '1';
-                  subEl.style.color = '#94a3b8';
+               const pageRefs = row.querySelectorAll('div.text-\\[10px\\].text-slate-400.italic');
+               pageRefs.forEach(ref => {
+                  const refEl = ref as HTMLElement;
+                  refEl.style.setProperty('display', 'block', 'important');
+                  refEl.style.setProperty('visibility', 'visible', 'important');
+                  refEl.style.setProperty('opacity', '1', 'important');
+                  refEl.style.color = '#94a3b8';
                });
 
-               // SURGICAL ADDITION: Expanded Column Width Fix for Usage, Unit, CO2E, and Confidence
+               // SURGICAL ADDITION: Aggressive Column Width for Usage and Unit to prevent 2-row wrap
                const cells = row.querySelectorAll('div');
                cells.forEach(cell => {
                  const cellEl = cell as HTMLElement;
                  const cellText = cellEl.innerText.toUpperCase();
-                 // Widening columns to 220px to prevent 2-row title wrapping in PDF
                  if (cellText.includes('USAGE') || cellText.includes('UNIT') || cellText.includes('CO2E') || cellText.includes('CONFIDENCE')) {
-                   cellEl.style.minWidth = '220px'; 
-                   cellEl.style.width = '220px';
+                   cellEl.style.minWidth = '280px'; 
+                   cellEl.style.width = '280px';
                    cellEl.style.whiteSpace = 'nowrap';
+                   cellEl.style.letterSpacing = '-0.2px'; // Prevent micro-wrapping in PDF engine
                    cellEl.style.display = 'flex';
                    cellEl.style.alignItems = 'center';
-                   cellEl.style.paddingRight = '12px';
+                   cellEl.style.paddingRight = '15px';
                  }
                });
             });
