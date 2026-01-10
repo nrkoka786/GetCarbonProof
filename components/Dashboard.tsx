@@ -123,12 +123,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       const doc = new jsPDF('p', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.getWidth();
       
+      // SURGICAL ADDITION: Enhanced captureSection helper with box expansion logic
       const captureSection = async (el: Element, scale = 2.0) => {
         return await html2canvas(el as HTMLElement, {
           scale,
           useCORS: true,
           backgroundColor: "#ffffff",
-          windowWidth: el.scrollWidth + 150 // Buffer fixes Document Audited cutoff
+          // Force a wide virtual window to prevent long text from chopping in summary boxes
+          windowWidth: 1600, 
+          onclone: (clonedDoc) => {
+            const boxes = clonedDoc.querySelectorAll('.bg-white.p-6.rounded-2xl');
+            boxes.forEach(box => {
+              const el = box as HTMLElement;
+              el.style.overflow = 'visible'; // Ensure box content can render fully
+              el.style.width = 'auto';
+              el.style.minWidth = '400px';
+              
+              // Target long filenames specifically to force wrapping inside the capture
+              const subText = el.querySelector('.text-slate-500.text-xs');
+              if (subText) {
+                (subText as HTMLElement).style.whiteSpace = 'normal';
+                (subText as HTMLElement).style.wordBreak = 'break-all';
+              }
+            });
+          }
         });
       };
 
@@ -385,6 +403,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </h4>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          {/* Narrative Insight Column */}
           <div className="space-y-6 text-sm leading-relaxed text-slate-600">
             <p>
               <strong className="text-slate-900 underline underline-offset-4 decoration-indigo-200">Inventory Distribution:</strong> {summary.narrativeInsight}
