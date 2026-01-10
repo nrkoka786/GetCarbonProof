@@ -147,23 +147,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
               }
             });
 
-            // SURGICAL RESTORATION: Force visibility for extraction page references
-            const auditLedgerRows = clonedDoc.querySelectorAll('.border-b.border-slate-200');
-            auditLedgerRows.forEach(row => {
-              const subtitles = row.querySelectorAll('.text-\\[10px\\].text-slate-400.italic');
-              subtitles.forEach(sub => {
-                const subEl = sub as HTMLElement;
-                subEl.style.display = 'block';
-                subEl.style.visibility = 'visible';
-                subEl.style.opacity = '1';
-                subEl.style.color = '#94a3b8';
-              });
+            // SURGICAL RESTORATION: Target specific description references for PDF visibility
+            const rows = clonedDoc.querySelectorAll('.border-b.border-slate-200');
+            rows.forEach(row => {
+               const pageRefs = row.querySelectorAll('div.text-\\[10px\\].text-slate-400.italic');
+               pageRefs.forEach(ref => {
+                  const refEl = ref as HTMLElement;
+                  refEl.style.display = 'block';
+                  refEl.style.visibility = 'visible';
+                  refEl.style.color = '#94a3b8';
+               });
             });
           }
         });
       };
 
-      // Page 1 Setup: Executive Summary with Master Branding
+      // Page 1 Setup
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(4);
       doc.setTextColor(148, 163, 184); 
@@ -187,7 +186,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       const cHeight = (chartsCanvas.height * (pageWidth - 40)) / chartsCanvas.width;
       doc.addImage(cImgData, 'PNG', 20, 22 + hHeight + 8, pageWidth - 40, cHeight);
 
-      // Page 2 Setup: Detailed Audit Ledger with Master Branding
+      // Page 2 Setup
       doc.addPage();
       doc.setFontSize(4);
       doc.setTextColor(148, 163, 184);
