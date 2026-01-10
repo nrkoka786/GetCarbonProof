@@ -23,10 +23,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
     if (found) return found;
 
     // Priority 2: Fallback for sample corporation mode
-    if (isSample) return \"Sample Corporation\";
+    if (isSample) return "Sample Corporation";
 
     // Priority 3: Default fallback if extraction is still pending or missing
-    return \"\"; // REMOVED: \"Authorized Portfolio\" text fallback
+    return ""; // REMOVED: "Authorized Portfolio" text fallback
   }, [results, isSample]);
 
   const summary = useMemo(() => {
@@ -96,12 +96,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
     }
 
     // SURGICAL ADDITION: AI Narrative Generator
-    const topCategory = consolidatedData[0]?.category || \"N/A\";
-    const topImpact = consolidatedData[0]?.co2e_kg ? Math.round(consolidatedData[0].co2e_kg).toLocaleString() : \"0\";
+    const topCategory = consolidatedData[0]?.category || "N/A";
+    const topImpact = consolidatedData[0]?.co2e_kg ? Math.round(consolidatedData[0].co2e_kg).toLocaleString() : "0";
     
     const narrativeInsight = results.length > 0 
       ? `This reporting period for ${clientName || 'the portfolio'} highlights a major concentration of emissions within the ${topCategory} category, contributing ${topImpact} kg CO2e to the total footprint. Scope distribution analysis confirms that ${scopeData[0].value > scopeData[2].value ? 'direct operations' : 'value chain activities'} drive the majority of verified organizational impact.`
-      : \"The Detailed Ledger is awaiting synchronization. Narrative insights will be generated upon portfolio verification.\";
+      : "The Detailed Ledger is awaiting synchronization. Narrative insights will be generated upon portfolio verification.";
 
     const verificationNote = `Audit procedures for ${clientName || 'this entity'} include high-fidelity extraction from ${docCount} source documents. Calculations have been validated against GHG Protocol standards with a weighted materiality rating of ${overallConfidence}.`;
 
@@ -112,9 +112,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
   const downloadSummaryPDF = async () => {
     if (!user) return;
     
-    // Explicitly target components to prevent repetition and clipping
-    const headerElement = document.querySelector('.grid-cols-1.md\\\\:grid-cols-3'); 
-    const chartsElement = document.querySelector('.grid-cols-1.lg\\\\:grid-cols-2'); 
+    // Target sections explicitly to prevent repetition
+    const headerElement = document.querySelector('.grid-cols-1.md\\:grid-cols-3'); 
+    const chartsElement = document.querySelector('.grid-cols-1.lg\\:grid-cols-2'); 
     const detailsElement = document.querySelector('.bg-white.p-8.rounded-3xl.mt-8'); 
 
     if (!headerElement || !chartsElement || !detailsElement) return;
@@ -123,18 +123,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       const doc = new jsPDF('p', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.getWidth();
       
-      // SURGICAL ADDITION: Helper to capture sections cleanly without page-border chopping
       const captureSection = async (el: Element, scale = 2.0) => {
         return await html2canvas(el as HTMLElement, {
           scale,
           useCORS: true,
-          backgroundColor: \"#ffffff\",
-          // windowWidth ensures long filenames in Documents Audited are not cut off
-          windowWidth: el.scrollWidth + 150 
+          backgroundColor: "#ffffff",
+          windowWidth: el.scrollWidth + 150 // Buffer fixes Document Audited cutoff
         });
       };
 
-      // PAGE 1: Corporate Header & Top Summary Card Block
+      // Page 1 Setup
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(4);
       doc.setTextColor(148, 163, 184); 
@@ -148,19 +146,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       doc.setTextColor(79, 70, 229);
       doc.text('EXECUTIVE AUDIT SUMMARY', 20, 16);
 
-      // Section 1: Summary Cards (Prevents text cutoff in Documents Audited)
       const headerCanvas = await captureSection(headerElement);
       const hImgData = headerCanvas.toDataURL('image/png');
       const hHeight = (headerCanvas.height * (pageWidth - 40)) / headerCanvas.width;
       doc.addImage(hImgData, 'PNG', 20, 22, pageWidth - 40, hHeight);
 
-      // Section 2: Charts (Centered to prevent Rollover duplication)
       const chartsCanvas = await captureSection(chartsElement);
       const cImgData = chartsCanvas.toDataURL('image/png');
       const cHeight = (chartsCanvas.height * (pageWidth - 40)) / chartsCanvas.width;
       doc.addImage(cImgData, 'PNG', 20, 22 + hHeight + 8, pageWidth - 40, cHeight);
 
-      // PAGE 2: Professional Commentary & Granular Audit Values
+      // Page 2 Setup
       doc.addPage();
       doc.setFontSize(7);
       doc.setTextColor(148, 163, 184);
@@ -171,137 +167,134 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       const dHeight = (detailsCanvas.height * (pageWidth - 40)) / detailsCanvas.width;
       doc.addImage(dImgData, 'PNG', 20, 18, pageWidth - 40, dHeight);
 
-      // Footer Branding on Page 2
       const finalPageHeight = doc.internal.pageSize.getHeight();
       doc.setFontSize(5);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Authenticated Auditor: \${user.email}`, 20, finalPageHeight - 8);
-      doc.text(`Verification Timestamp: \${new Date().toLocaleString()}`, 20, finalPageHeight - 4);
+      doc.text(`Authenticated Auditor: ${user.email}`, 20, finalPageHeight - 8);
+      doc.text(`Verification Timestamp: ${new Date().toLocaleString()}`, 20, finalPageHeight - 4);
       
-      doc.save(`\${clientName.replace(/\\\\s+/g, '_')}_Carbon_Audit.pdf`);
+      doc.save(`${clientName.replace(/\s+/g, '_')}_Carbon_Audit.pdf`);
     } catch (e) {
-      console.error(\"Visual PDF generation failed\", e);
+      console.error("PDF Export failed", e);
     }
   };
 
   if (isProcessing && results.length === 0) {
     return (
-      <div className=\"flex flex-col items-center justify-center h-[60vh] text-indigo-600 bg-white rounded-3xl border border-slate-200 shadow-sm animate-pulse\">
-        <div className=\"w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-6\"></div>
-        <p className=\"text-xl font-bold\">Synchronizing Executive View...</p>
-        <p className=\"text-sm text-slate-400 mt-2\">Connecting to AI node for isolated portfolio verification</p>
+      <div className="flex flex-col items-center justify-center h-[60vh] text-indigo-600 bg-white rounded-3xl border border-slate-200 shadow-sm animate-pulse">
+        <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-6"></div>
+        <p className="text-xl font-bold">Synchronizing Executive View...</p>
+        <p className="text-sm text-slate-400 mt-2">Connecting to AI node for isolated portfolio verification</p>
       </div>
     );
   }
 
   return (
-    <div id=\"audit-dashboard-view\" className=\"space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative p-4 bg-white rounded-3xl\">
+    <div id="audit-dashboard-view" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative p-4 bg-white rounded-3xl">
       {isSample && (
-        <div className=\"absolute inset-0 pointer-events-none z-[100] flex items-center justify-center overflow-hidden\">
-          <div className=\"text-[12rem] font-black text-slate-100 rotate-[-35deg] select-none opacity-20 whitespace-nowrap uppercase tracking-widest\">
+        <div className="absolute inset-0 pointer-events-none z-[100] flex items-center justify-center overflow-hidden">
+          <div className="text-[12rem] font-black text-slate-100 rotate-[-35deg] select-none opacity-20 whitespace-nowrap uppercase tracking-widest">
             Sample Report
           </div>
         </div>
       )}
 
-      {/* DASHBOARD HEADER: \"Export Charts\" definitively removed | Client Branding reinforced */}
-      <div className=\"flex justify-between items-end border-b border-slate-100 pb-6 mb-6\">
+      <div className="flex justify-between items-end border-b border-slate-100 pb-6 mb-6">
         <div>
-          <span className=\"text-xs font-black text-indigo-600 uppercase tracking-widest\">Executive Audit Summary</span>
-          <h2 className=\"text-3xl font-black text-slate-900 mt-1\">{clientName || 'Awaiting Portfolio'}</h2>
+          <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">Executive Audit Summary</span>
+          <h2 className="text-3xl font-black text-slate-900 mt-1">{clientName || 'Awaiting Portfolio'}</h2>
         </div>
-        <div className=\"flex gap-3\">
+        <div className="flex gap-3">
           {!user && (
             <button 
               onClick={onSignInRequired}
-              className=\"bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg active:scale-95 flex items-center gap-2\"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg active:scale-95 flex items-center gap-2"
             >
-              <i className=\"fas fa-sign-in-alt\"></i> Sign in to Save
+              <i className="fas fa-sign-in-alt"></i> Sign in to Save
             </button>
           )}
-          {/* Removed: Export Charts button for professional immutable audit standards */}
           {results.length > 0 && user && (
             <button 
               onClick={downloadSummaryPDF}
-              className=\"bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg active:scale-95 flex items-center gap-2\"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg active:scale-95 flex items-center gap-2"
             >
-              <i className=\"fas fa-file-pdf\"></i> Download Signed PDF
+              <i className="fas fa-file-pdf"></i> Download Signed PDF
             </button>
           )}
         </div>
       </div>
 
       {isSample && (
-        <div className=\"bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-center gap-4 animate-in slide-in-from-top-4 duration-500\">
-          <div className=\"w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600\">
-            <i className=\"fas fa-circle-info\"></i>
+        <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-center gap-4 animate-in slide-in-from-top-4 duration-500">
+          <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+            <i className="fas fa-circle-info"></i>
           </div>
           <div>
-            <h4 className=\"text-sm font-bold text-amber-900\">Demonstration Mode Active</h4>
-            <p className=\"text-xs text-amber-700\">This view represents a validated audit of 19.62 tonnes CO2e based on a standard utility profile.</p>
+            <h4 className="text-sm font-bold text-amber-900">Demonstration Mode Active</h4>
+            <p className="text-xs text-amber-700">This view represents a validated audit of 19.62 tonnes CO2e based on a standard utility profile.</p>
           </div>
         </div>
       )}
 
-      <div className=\"grid grid-cols-1 md:grid-cols-3 gap-6\">
-        <div className=\"bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300\">
-          <div className=\"flex justify-between items-start mb-4\">
-            <div className=\"p-2 bg-indigo-50 rounded-lg text-indigo-600\">
-              <i className=\"fas fa-leaf text-xl\"></i>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+              <i className="fas fa-leaf text-xl"></i>
             </div>
-            <span className=\"text-xs font-bold text-slate-400 uppercase tracking-wider\">Total Footprint</span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Footprint</span>
           </div>
-          <div className=\"flex items-baseline gap-2\">
-            <h3 className=\"text-4xl font-black text-slate-900\">
+          <div className="flex items-baseline gap-2">
+            <h3 className="text-4xl font-black text-slate-900">
               {(summary.total / 1000).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </h3>
-            <span className=\"text-slate-500 font-medium\">tonnes CO2e</span>
+            <span className="text-slate-500 font-medium">tonnes CO2e</span>
           </div>
-          <div className=\"mt-2 text-xs text-slate-400 font-bold uppercase tracking-tighter\">
+          <div className="mt-2 text-xs text-slate-400 font-bold uppercase tracking-tighter">
             {summary.total.toLocaleString()} kg Verified aggregate
           </div>
         </div>
 
-        <div className=\"bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300\">
-          <div className=\"flex justify-between items-start mb-4\">
-            <div className=\"p-2 bg-indigo-50 rounded-lg text-indigo-600\">
-              <i className=\"fas fa-file-contract text-xl\"></i>
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+              <i className="fas fa-file-contract text-xl"></i>
             </div>
-            <span className=\"text-xs font-bold text-slate-400 uppercase tracking-wider\">Documents Audited</span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Documents Audited</span>
           </div>
-          <h3 className=\"text-4xl font-black text-slate-900\">{summary.docCount}</h3>
-          <p className=\"text-slate-500 text-xs mt-2 truncate font-bold uppercase tracking-tight\">
+          <h3 className="text-4xl font-black text-slate-900">{summary.docCount}</h3>
+          <p className="text-slate-500 text-xs mt-2 truncate font-bold uppercase tracking-tight">
             {summary.docSources.length > 0 ? summary.docSources.join(' • ') : 'No Evidence Processed'}
           </p>
         </div>
 
-        <div className=\"bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300\">
-          <div className=\"flex justify-between items-start mb-4\">
-            <div className=\"p-2 bg-indigo-50 rounded-lg text-indigo-600\">
-              <i className=\"fas fa-award text-xl\"></i>
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+              <i className="fas fa-award text-xl"></i>
             </div>
-            <span className=\"text-xs font-bold text-slate-400 uppercase tracking-wider\">Audit Confidence</span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Audit Confidence</span>
           </div>
-          <h3 className={`text-4xl font-black \${
+          <h3 className={`text-4xl font-black ${
             summary.overallConfidence === 'High' ? 'text-emerald-600' : 
             summary.overallConfidence === 'Medium' ? 'text-amber-500' : 
             summary.overallConfidence === 'Pending' ? 'text-slate-300' : 'text-rose-500'
           }`}>
             {summary.overallConfidence}
           </h3>
-          <p className=\"text-slate-500 text-xs mt-2 font-medium\">
+          <p className="text-slate-500 text-xs mt-2 font-medium">
             AI validation rating
           </p>
         </div>
       </div>
 
-      <div className=\"grid grid-cols-1 lg:grid-cols-2 gap-8\">
-        <div className=\"bg-white p-8 rounded-2xl border border-slate-200 shadow-sm h-[480px]\">
-          <h4 className=\"text-lg font-bold text-slate-800 mb-8 flex items-center gap-2\">
-            <i className=\"fas fa-chart-pie text-indigo-600\"></i>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm h-[480px]">
+          <h4 className="text-lg font-bold text-slate-800 mb-8 flex items-center gap-2">
+            <i className="fas fa-chart-pie text-indigo-600"></i>
             Carbon Scope Breakdown
           </h4>
-          <ResponsiveContainer width=\"100%\" height=\"80%\">
+          <ResponsiveContainer width="100%" height="80%">
             {results.length > 0 ? (
               <PieChart>
                 <Pie
@@ -309,49 +302,49 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
                   innerRadius={100}
                   outerRadius={150}
                   paddingAngle={10}
-                  dataKey=\"value\"
+                  dataKey="value"
                   animationDuration={1500}
                 >
                   {summary.scopeData.map((entry, index) => (
-                    <Cell key={`cell-\${index}`} fill={entry.color} strokeWidth={0} />
+                    <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
                   ))}
                 </Pie>
                 <Tooltip 
                   contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontFamily: 'Inter' }} 
-                  formatter={(value: number) => [`\${value.toLocaleString()} kg CO2e`, 'Emissions']} 
+                  formatter={(value: number) => [`${value.toLocaleString()} kg CO2e`, 'Emissions']} 
                 />
-                <Legend verticalAlign=\"bottom\" align=\"center\" iconType=\"circle\" />
+                <Legend verticalAlign="bottom" align="center" iconType="circle" />
               </PieChart>
             ) : (
-              <div className=\"flex items-center justify-center h-full text-slate-300 font-medium italic\">
+              <div className="flex items-center justify-center h-full text-slate-300 font-medium italic">
                 Pending Portfolio Audit...
               </div>
             )}
           </ResponsiveContainer>
         </div>
 
-        <div className=\"bg-white p-8 rounded-2xl border border-slate-200 shadow-sm h-[480px] flex flex-col\">
-          <div className=\"flex justify-between items-center mb-8\">
-            <h4 className=\"text-lg font-bold text-slate-800 flex items-center gap-2\">
-              <i className=\"fas fa-poll text-indigo-600\"></i>
+        <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm h-[480px] flex flex-col">
+          <div className="flex justify-between items-center mb-8">
+            <h4 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <i className="fas fa-poll text-indigo-600"></i>
               Impact by Category (kg)
             </h4>
           </div>
-          <div className=\"flex-1\">
-            <ResponsiveContainer width=\"100%\" height=\"90%\">
+          <div className="flex-1">
+            <ResponsiveContainer width="100%" height="90%">
               {results.length > 0 ? (
                 <BarChart 
                   data={summary.consolidatedData.slice(0, 8)}
                   margin={{ bottom: 60 }}
                 >
                   <XAxis 
-                    dataKey=\"category\" 
+                    dataKey="category" 
                     tick={{fontSize: 9, fill: '#64748b', fontWeight: 700}} 
                     axisLine={false} 
                     tickLine={false} 
                     interval={0}
                     angle={-25}
-                    textAnchor=\"end\"
+                    textAnchor="end"
                     dy={10}
                   />
                   <YAxis 
@@ -365,18 +358,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
                     contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontFamily: 'Inter' }} 
                   />
                   <Bar 
-                    dataKey=\"co2e_kg\" 
+                    dataKey="co2e_kg" 
                     radius={[8, 8, 0, 0]} 
                     animationDuration={1800}
                     barSize={40}
                   >
                     {summary.consolidatedData.map((entry, index) => (
-                      <Cell key={`cell-\${index}`} fill={entry.fill} />
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Bar>
                 </BarChart>
               ) : (
-                <div className=\"flex items-center justify-center h-full text-slate-300 font-medium italic\">
+                <div className="flex items-center justify-center h-full text-slate-300 font-medium italic">
                   Awaiting Source Data...
                 </div>
               )}
@@ -385,34 +378,33 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
         </div>
       </div>
 
-      <div className=\"bg-white p-8 rounded-3xl border border-slate-200 shadow-sm mt-8 space-y-6\">
-        <h4 className=\"text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 uppercase tracking-widest text-xs flex items-center gap-3\">
-          <i className=\"fas fa-file-invoice text-indigo-600\"></i>
+      <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm mt-8 space-y-6">
+        <h4 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 uppercase tracking-widest text-xs flex items-center gap-3">
+          <i className="fas fa-file-invoice text-indigo-600"></i>
           Detailed Categorical Impact & Commentary
         </h4>
         
-        <div className=\"grid grid-cols-1 md:grid-cols-2 gap-12\">
-          {/* Narrative Insight Column */}
-          <div className=\"space-y-6 text-sm leading-relaxed text-slate-600\">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          <div className="space-y-6 text-sm leading-relaxed text-slate-600">
             <p>
-              <strong className=\"text-slate-900 underline underline-offset-4 decoration-indigo-200\">Inventory Distribution:</strong> {summary.narrativeInsight}
+              <strong className="text-slate-900 underline underline-offset-4 decoration-indigo-200">Inventory Distribution:</strong> {summary.narrativeInsight}
             </p>
             <p>
-              <strong className=\"text-slate-900 underline underline-offset-4 decoration-indigo-200\">Verification Statement:</strong> {summary.verificationNote}
+              <strong className="text-slate-900 underline underline-offset-4 decoration-indigo-200">Verification Statement:</strong> {summary.verificationNote}
             </p>
           </div>
 
-          <div className=\"bg-slate-50 p-6 rounded-2xl space-y-3 border border-slate-100\">
-            <h5 className=\"text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4\">Granular Audit Values (kg CO2e)</h5>
+          <div className="bg-slate-50 p-6 rounded-2xl space-y-3 border border-slate-100">
+            <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Granular Audit Values (kg CO2e)</h5>
             {summary.consolidatedData.slice(0, 10).map((item, idx) => (
-              <div key={idx} className=\"flex justify-between items-center border-b border-slate-200 pb-2\">
-                <span className=\"text-xs font-bold text-slate-700\">{item.category}</span>
-                <span className=\"text-xs font-mono font-black text-indigo-600\">
+              <div key={idx} className="flex justify-between items-center border-b border-slate-200 pb-2">
+                <span className="text-xs font-bold text-slate-700">{item.category}</span>
+                <span className="text-xs font-mono font-black text-indigo-600">
                   {Math.round(item.co2e_kg).toLocaleString()} kg
                 </span>
               </div>
             ))}
-            <p className=\"text-[10px] text-slate-400 italic mt-4\">Note: TopContributors shown for materiality clarity.</p>
+            <p className="text-[10px] text-slate-400 italic mt-4">Note: TopContributors shown for materiality clarity.</p>
           </div>
         </div>
       </div>
