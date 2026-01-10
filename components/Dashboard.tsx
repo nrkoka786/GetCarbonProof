@@ -157,6 +157,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
                   refEl.style.visibility = 'visible';
                   refEl.style.color = '#94a3b8';
                });
+
+               // SURGICAL ADDITION: Column Width Optimization for PDF
+               // Select cells that contain titles likely to wrap (Usage, Unit, CO2E, Confidence)
+               const cells = row.querySelectorAll('div');
+               cells.forEach(cell => {
+                 const cellEl = cell as HTMLElement;
+                 // Target column headers and data cells to prevent title/value wrapping
+                 if (cellEl.innerText.match(/USAGE|UNIT|CO2E|CONFIDENCE/i)) {
+                   cellEl.style.minWidth = '120px';
+                   cellEl.style.whiteSpace = 'nowrap';
+                 }
+               });
             });
           }
         });
