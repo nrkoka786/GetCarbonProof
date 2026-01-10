@@ -147,26 +147,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
               }
             });
 
-            // SURGICAL RESTORATION: Target specific description references for PDF visibility
-            const rows = clonedDoc.querySelectorAll('.border-b.border-slate-200');
-            rows.forEach(row => {
-               const pageRefs = row.querySelectorAll('div.text-\\[10px\\].text-slate-400.italic');
-               pageRefs.forEach(ref => {
-                  const refEl = ref as HTMLElement;
-                  refEl.style.display = 'block';
-                  refEl.style.visibility = 'visible';
-                  refEl.style.color = '#94a3b8';
+            // SURGICAL RESTORATION: Explicitly force visibility for unique extraction page references
+            const auditLedgerRows = clonedDoc.querySelectorAll('.border-b.border-slate-200');
+            auditLedgerRows.forEach(row => {
+               // Restore visibility of unique per-row page markers
+               const subtitles = row.querySelectorAll('.text-\\[10px\\].text-slate-400.italic');
+               subtitles.forEach(sub => {
+                  const subEl = sub as HTMLElement;
+                  subEl.style.display = 'block';
+                  subEl.style.visibility = 'visible';
+                  subEl.style.color = '#94a3b8';
                });
 
-               // SURGICAL ADDITION: Column Width Optimization for PDF
-               // Select cells that contain titles likely to wrap (Usage, Unit, CO2E, Confidence)
+               // SURGICAL ADDITION: Definitive Column Width Fix
                const cells = row.querySelectorAll('div');
                cells.forEach(cell => {
                  const cellEl = cell as HTMLElement;
-                 // Target column headers and data cells to prevent title/value wrapping
-                 if (cellEl.innerText.match(/USAGE|UNIT|CO2E|CONFIDENCE/i)) {
-                   cellEl.style.minWidth = '120px';
+                 const text = cellEl.innerText.toUpperCase();
+                 // Apply precise widths to prevent two-row header titles
+                 if (text.includes('USAGE') || text.includes('UNIT') || text.includes('CO2E') || text.includes('CONFIDENCE')) {
+                   cellEl.style.minWidth = '140px'; 
+                   cellEl.style.width = '140px';
                    cellEl.style.whiteSpace = 'nowrap';
+                   cellEl.style.display = 'flex';
+                   cellEl.style.alignItems = 'center';
                  }
                });
             });
