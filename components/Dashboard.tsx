@@ -115,13 +115,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
     if (!element) return;
 
     try {
-      // SURGICAL ADJUSTMENT: Lowering capture scale to 1.8 for balanced chart text
+      // SURGICAL ADJUSTMENT: Expanded capture width to prevent chart clipping
       const canvas = await html2canvas(element, {
-        scale: 1.8, 
+        scale: 2.0, // Optimized for clarity and file size
         useCORS: true,
         backgroundColor: "#ffffff",
         logging: false,
-        windowWidth: element.scrollWidth,
+        windowWidth: element.scrollWidth + 100, // Buffer for wide bar charts
         windowHeight: element.scrollHeight,
         onclone: (clonedDoc) => {
           // SURGICAL REMOVAL: Clean the canvas to prevent double-branding
@@ -149,7 +149,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
 
           const clonedElement = clonedDoc.getElementById('audit-dashboard-view');
           if (clonedElement) {
-            clonedElement.style.padding = '10px'; 
+            clonedElement.style.padding = '20px'; // Gutter buffer for PDF borders
           }
         }
       });
@@ -163,41 +163,42 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       const imgProps = doc.getImageProperties(imgData);
       const imgHeight = (imgProps.height * pageWidth) / imgProps.width;
 
-      // SURGICAL REPLACEMENT: Micro-scaled typography (Final 50% Reduction)
+      // SURGICAL REPLACEMENT: Balanced typography for legibility restoration
       let heightLeft = imgHeight;
-      let position = 22; // Tightened start position to match smaller header
+      let position = 30; // Optimized tighter start position for content
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(4); // Professional micro-label (was 8)
+      doc.setFontSize(6); // Micro-scaled label
       doc.setTextColor(148, 163, 184); 
-      doc.text('AUTHENTICATED BY GETCARBONPROOF', 20, 6);
+      doc.text('AUTHENTICATED BY GETCARBONPROOF', 20, 10);
       
-      doc.setFontSize(7.5); // Refined title size (was 14)
+      doc.setFontSize(12); // Restored Title Size for FZ Prestige Digital
       doc.setTextColor(15, 23, 42);
-      doc.text(clientName.toUpperCase(), 20, 12);
+      doc.text(clientName.toUpperCase(), 20, 18);
       
-      doc.setFontSize(5.5); // Subtle report sub-label (was 11)
+      doc.setFontSize(8); // Balanced Sub-header size
       doc.setTextColor(79, 70, 229);
-      doc.text('EXECUTIVE AUDIT SUMMARY', 20, 16);
+      doc.text('EXECUTIVE AUDIT SUMMARY', 20, 24);
 
-      // Render the first page image slice
+      // SURGICAL ADDITION: Refined multi-page slicing to prevent text bifurcation
+      const printableHeight = pageHeight - position - 20; 
+      
       doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight, undefined, 'FAST');
-      heightLeft -= (pageHeight - position);
+      heightLeft -= printableHeight;
 
-      // SURGICAL ADDITION: Loop to add subsequent pages if content exceeds A4 height
       while (heightLeft > 0) {
         doc.addPage();
-        position = heightLeft - imgHeight; // Shift image up to start next slice
-        doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight, undefined, 'FAST');
+        position = -heightLeft; 
+        doc.addImage(imgData, 'PNG', 0, position + 20, pageWidth, imgHeight, undefined, 'FAST');
         heightLeft -= pageHeight;
       }
       
       // SURGICAL REPLACEMENT: Micro-scaled footer typography
       const finalPageHeight = doc.internal.pageSize.getHeight();
-      doc.setFontSize(5); // Micro-scaled footer metadata
+      doc.setFontSize(7); // Reduced to 7pt
       doc.setFont('helvetica', 'normal');
-      doc.text(`Authenticated Auditor: ${user.email}`, 20, finalPageHeight - 6);
-      doc.text(`Verification Timestamp: ${new Date().toLocaleString()}`, 20, finalPageHeight - 3);
+      doc.text(`Authenticated Auditor: ${user.email}`, 20, finalPageHeight - 10);
+      doc.text(`Verification Timestamp: ${new Date().toLocaleString()}`, 20, finalPageHeight - 5);
       
       doc.save(`${clientName.replace(/\s+/g, '_')}_Carbon_Audit.pdf`);
     } catch (e) {
