@@ -22,8 +22,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
     const found = results.find(r => r.company_name && r.company_name.trim() !== '')?.company_name;
     if (found) return found;
 
-    // Priority 2: Fallback for sample corporation mode
-    if (isSample) return "Sample Corporation";
+    // Priority 2: Fallback for sample corporation mode (Surgically removed name for Sample report)
+    if (isSample) return ""; 
 
     // Priority 3: Default fallback if extraction is still pending or missing
     return ""; // REMOVED: "Authorized Portfolio" text fallback
@@ -147,9 +147,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
               }
             });
 
-            // SURGICAL RESTORATION: Force unique Description markers (e.g., "on page 11") to be visible
+            // SURGICAL RESTORATION: Explicitly force visibility for unique extraction page references
             const auditLedgerRows = clonedDoc.querySelectorAll('.border-b.border-slate-200');
             auditLedgerRows.forEach(row => {
+               // Force visibility for italic extraction details (e.g. "on page 11")
                const pageRefs = row.querySelectorAll('div.text-\\[10px\\].text-slate-400.italic');
                pageRefs.forEach(ref => {
                   const refEl = ref as HTMLElement;
@@ -159,16 +160,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
                   refEl.style.color = '#94a3b8';
                });
 
-               // SURGICAL ADDITION: Aggressive Column Width for Usage and Unit to prevent 2-row wrap
+               // SURGICAL ADDITION: Aggressive Width Fix for Usage and Unit to prevent 2-row wrapping
                const cells = row.querySelectorAll('div');
                cells.forEach(cell => {
                  const cellEl = cell as HTMLElement;
                  const cellText = cellEl.innerText.toUpperCase();
+                 // Widening to 280px with micro-spacing reset to ensure headers like "USAGE" remain on one row
                  if (cellText.includes('USAGE') || cellText.includes('UNIT') || cellText.includes('CO2E') || cellText.includes('CONFIDENCE')) {
                    cellEl.style.minWidth = '280px'; 
                    cellEl.style.width = '280px';
                    cellEl.style.whiteSpace = 'nowrap';
-                   cellEl.style.letterSpacing = '-0.2px'; // Prevent micro-wrapping in PDF engine
+                   cellEl.style.letterSpacing = '-0.1px'; 
                    cellEl.style.display = 'flex';
                    cellEl.style.alignItems = 'center';
                    cellEl.style.paddingRight = '15px';
