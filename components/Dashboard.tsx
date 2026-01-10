@@ -159,15 +159,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
                   subEl.style.color = '#94a3b8';
                });
 
-               // SURGICAL ADDITION: Definitive Column Width Fix
+               // SURGICAL ADDITION: Expanded Column Width Fix for Usage and Unit
                const cells = row.querySelectorAll('div');
                cells.forEach(cell => {
                  const cellEl = cell as HTMLElement;
                  const text = cellEl.innerText.toUpperCase();
-                 // Apply precise widths to prevent two-row header titles
+                 // Apply significantly wider min-widths specifically for Usage and Unit to match historical precision
                  if (text.includes('USAGE') || text.includes('UNIT') || text.includes('CO2E') || text.includes('CONFIDENCE')) {
-                   cellEl.style.minWidth = '140px'; 
-                   cellEl.style.width = '140px';
+                   cellEl.style.minWidth = '180px'; 
+                   cellEl.style.width = '180px';
                    cellEl.style.whiteSpace = 'nowrap';
                    cellEl.style.display = 'flex';
                    cellEl.style.alignItems = 'center';

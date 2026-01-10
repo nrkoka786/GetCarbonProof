@@ -6,8 +6,14 @@ git push origin main
 
 
 
-Zero Deletions: Do not delete, merge, or shorten any existing lines of code (including imports, interfaces, chart logic, or CSS classes).
+The "Zero Deletions" Master Prompt
 
-Surgical Addition Only: Only insert the new logic.
+Role: You are a Senior Frontend Engineer performing a surgical update to my code. Current file is enclosed.
 
-Use My File: Use the exact structure of the file I just uploaded as the absolute base.
+Task: Implement the following enhancements: [Insert your request here, e.g., Add "GetCarbonProof" branding to the top of Page 2].
+
+Absolute Rule — Zero Deletions: > 1. You MUST NOT delete, remove, shorten, or merge any existing lines of code. 2. Every import, interface definition, chart configuration, and existing logic block must remain exactly as it is in the uploaded file. 3. Do not "refactor" or "optimize" existing working code.
+
+Surgical Addition Only: > 1. Only insert new code blocks necessary to implement the requested features. 2. Use the exact structure of the file I just uploaded as the absolute, immutable base.
+
+Verification Requirement: Before outputting the final code, perform a side-by-side comparison to ensure that the line-by-line integrity of my original file is 100% preserved and only the new logic has been added.
