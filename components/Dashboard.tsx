@@ -110,7 +110,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
 
   // SURGICAL REPLACEMENT: Modular Multi-Page PDF Export Engine
   const downloadSummaryPDF = async () => {
-    if (!user) return;
+    // SURGICAL ADJUSTMENT: Allow download if user is logged in OR if this is a sample report
+    if (!user && !isSample) return;
     
     // Target sections explicitly to prevent repetition
     const headerElement = document.querySelector('.grid-cols-1.md\\:grid-cols-3'); 
@@ -223,10 +224,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       const finalPageHeight = doc.internal.pageSize.getHeight();
       doc.setFontSize(5);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Authenticated Auditor: ${user.email}`, 20, finalPageHeight - 8);
+      // SURGICAL ADJUSTMENT: Handle email display for non-logged-in sample generation
+      doc.text(`Authenticated Auditor: ${user?.email || 'System Demonstration'}`, 20, finalPageHeight - 8);
       doc.text(`Verification Timestamp: ${new Date().toLocaleString()}`, 20, finalPageHeight - 4);
       
-      doc.save(`${clientName.replace(/\s+/g, '_')}_Carbon_Audit.pdf`);
+      doc.save(`${clientName.replace(/\s+/g, '_') || 'Sample'}_Carbon_Audit.pdf`);
     } catch (e) {
       console.error("PDF Export failed", e);
     }
@@ -266,7 +268,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
               <i className="fas fa-sign-in-alt"></i> Sign in to Save
             </button>
           )}
-          {results.length > 0 && user && (
+          {/* SURGICAL ADJUSTMENT: Show Download button for Samples even if not logged in */}
+          {(results.length > 0 && (user || isSample)) && (
             <button 
               onClick={downloadSummaryPDF}
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg active:scale-95 flex items-center gap-2"
