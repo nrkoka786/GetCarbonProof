@@ -143,8 +143,23 @@ const MainApp: React.FC = () => {
     }
   };
 
+  // SURGICAL REPLACEMENT: Updated handleViewSample to bridge landing page to live dashboard engine
   const handleViewSample = useCallback(() => {
-    setAppView('sample');
+    // Professional 24.97t dataset matching image_b5a3b8.png
+    const sampleData: AuditEntry[] = [
+      { id: '1', category: 'Fuel', scope: 'Scope 1', usage: '1,500 L', unit: 'Diesel', co2e_kg: 4250, confidence_score: 'High', doc_type: 'Fleet Ledger' },
+      { id: '2', category: 'Electricity', scope: 'Scope 2', usage: '45,000 kWh', unit: 'Grid Mix', co2e_kg: 19618, confidence_score: 'High', doc_type: 'Utility Bill' },
+      { id: '3', category: 'Waste Disposal', scope: 'Scope 3', usage: '1.2 tonnes', unit: 'Landfill', co2e_kg: 1100, confidence_score: 'High', doc_type: 'Waste Cert' }
+    ];
+
+    setAuditResults(sampleData);
+    setIsSampleView(true);
+    setAppView('internal');
+    setActiveTab('dashboard');
+    
+    if ((window as any).gtag) {
+      (window as any).gtag('event', 'view_sample_report');
+    }
   }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
