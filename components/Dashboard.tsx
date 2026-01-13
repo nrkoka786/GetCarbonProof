@@ -11,9 +11,11 @@ interface DashboardProps {
   isSample?: boolean;
   onAuthRequired?: () => void;
   onSignInRequired?: () => void;
+  // SURGICAL ADDITION: Added onBack property to interface to handle Home Page navigation
+  onBack?: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isSample, onAuthRequired, onSignInRequired }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isSample, onAuthRequired, onSignInRequired, onBack }) => {
   const { user } = useAuth();
 
   // SURGICAL ADDITION: Robust Logic to extract Company Name (e.g., FZ Prestige Digital) from the results
@@ -246,6 +248,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
 
   return (
     <div id="audit-dashboard-view" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative p-4 bg-white rounded-3xl">
+      {/* SURGICAL ADDITION: Navigation Header to provide Exit path and Logo Home link */}
+      <div className="flex justify-between items-center px-2 py-4 border-b border-slate-50 mb-4">
+        <div 
+          onClick={onBack}
+          className="flex items-center gap-2 cursor-pointer group transition-all"
+        >
+          <div className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-100 group-hover:scale-110">
+            <i className="fas fa-leaf text-sm"></i>
+          </div>
+          <span className="text-lg font-black text-slate-900 tracking-tight">GetCarbonProof</span>
+        </div>
+        
+        {isSample && (
+          <button 
+            onClick={onBack}
+            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-indigo-600 transition-all"
+          >
+            <i className="fas fa-arrow-left"></i>
+            Exit Demonstration
+          </button>
+        )}
+      </div>
+
       {isSample && (
         <div className="absolute inset-0 pointer-events-none z-[100] flex items-center justify-center overflow-hidden">
           <div className="text-[12rem] font-black text-slate-100 rotate-[-35deg] select-none opacity-20 whitespace-nowrap uppercase tracking-widest">
