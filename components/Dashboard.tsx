@@ -168,7 +168,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
                cells.forEach(cell => {
                  const cellEl = cell as HTMLElement;
                  const cellText = cellEl.innerText.toUpperCase();
-                 // Widening to 280px with micro-spacing reset to ensure headers like \"USAGE\" remain on one row
+                 // Widening to 280px with micro-spacing reset to ensure headers like "USAGE" remain on one row
                  if (cellText.includes('USAGE') || cellText.includes('UNIT') || cellText.includes('CO2E') || cellText.includes('CONFIDENCE')) {
                    cellEl.style.minWidth = '280px'; 
                    cellEl.style.width = '280px';
