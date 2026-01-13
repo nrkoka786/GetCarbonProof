@@ -110,8 +110,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
 
   // SURGICAL REPLACEMENT: Modular Multi-Page PDF Export Engine
   const downloadSummaryPDF = async () => {
-    // SURGICAL ADJUSTMENT: Allow download if user is logged in OR if this is a sample report
-    if (!user && !isSample) return;
+    // SURGICAL ADJUSTMENT: Allow download if results exist (regardless of auth for Sample mode)
+    if (results.length === 0) return;
     
     // Target sections explicitly to prevent repetition
     const headerElement = document.querySelector('.grid-cols-1.md\\:grid-cols-3'); 
@@ -190,7 +190,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       
       doc.setFontSize(10);
       doc.setTextColor(15, 23, 42);
-      doc.text(clientName.toUpperCase(), 20, 12);
+      doc.text(clientName.toUpperCase() || "SAMPLE AUDIT", 20, 12);
       
       doc.setFontSize(6);
       doc.setTextColor(79, 70, 229);
@@ -214,7 +214,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
       
       doc.setFontSize(7);
       doc.setTextColor(15, 23, 42);
-      doc.text(`${clientName.toUpperCase()} - DETAILED AUDIT LEDGER`, 20, 12);
+      doc.text(`${clientName.toUpperCase() || "SAMPLE"} - DETAILED AUDIT LEDGER`, 20, 12);
 
       const detailsCanvas = await captureSection(detailsElement);
       const dImgData = detailsCanvas.toDataURL('image/png');
@@ -268,13 +268,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ results, isProcessing, isS
               <i className="fas fa-sign-in-alt"></i> Sign in to Save
             </button>
           )}
-          {/* SURGICAL ADJUSTMENT: Show Download button for Samples even if not logged in */}
-          {(results.length > 0 && (user || isSample)) && (
+          {/* SURGICAL ADJUSTMENT: Persistent Download Sample PDF button for on-screen demos */}
+          {results.length > 0 && (
             <button 
               onClick={downloadSummaryPDF}
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg active:scale-95 flex items-center gap-2"
             >
-              <i className="fas fa-file-pdf"></i> Download Signed PDF
+              <i className="fas fa-file-pdf"></i> Download Sample PDF
             </button>
           )}
         </div>
